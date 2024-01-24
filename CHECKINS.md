@@ -32,28 +32,26 @@ The primary users of AQL are backend developers who frequently interact with var
 #### This short code example ideally will retrieves user data, fetches their tasks, marks as completed, and sends notifications about task completion.
 
 ```aql
-SET [GET https://api.com/users/{userId} WITH { userId: 123 }] AS data ON ERROR LOG 'failed' ELSE POST 'https://api.com/send' WITH {
-    email: data.email,
-    subject: '...',
-    message: '...
-}
-
 FOR EACH user IN GET https://api.com/users {
     LOG user.name
-    SET [GET 'https://api.com/users/{user.id}/tasks'] AS TaskList
+    SET GET https://api.com/users/{user.id}/tasks AS TaskList
+    SET 'failed' AS failMsg
 
     FOR EACH task IN TaskList {
-        PUT 'https://api.com/tasks/{task.id}' WITH { status: 'completed' }
+        PUT https://api.com/tasks/{task.id} WITH { status: 'completed' }
 
-        POST 'https://api.com/send' WITH {
+        POST https://api.com/send WITH {
             userId: user.id,
             message: 'Task {task.id} completed'
-        } ON data.sth==false DELETE 'https://api.com/tasks/{task.id}' ELSE LOG ‘failed
+        }
+
+        ON task.sth==false {
+            DELETE https://api.com/tasks/{task.id}
+        } ELSE {
+            LOG failMsg
+        }
     }
-
 }
-
-LOG 'end'
 ```
 
 ## Feedbacks and Follow-up:

@@ -41,3 +41,6 @@ out/*
 .idea/*
 *.iml
 *.class
+
+test.txt
+.antlr/*

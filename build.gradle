@@ -8,6 +8,8 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'java'
+    id 'antlr' 
 }
 
 repositories {
@@ -21,6 +23,7 @@ dependencies {
 
     // This dependency is used by the application.
     implementation libs.guava
+    antlr "org.antlr:antlr4:4.13.1"
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -35,11 +38,27 @@ application {
     mainClass.set('main.main')
 }
 
+// build: java -jar lib/antlr-4.13.1-complete.jar -Dlanguage=Java -o src/gen -visitor -package gen AQLLexer.g4 AQLParser.g4
+// create gui: antlr4-parse AQLLexer.g4 AQLParser.g4 program -gui <inputfile>
+task generateAntlrSource(type: Exec) {
+    commandLine 'java', '-jar', 'lib/antlr-4.13.1-complete.jar', '-Dlanguage=Java', '-o', 'src/gen', '-visitor', '-package', 'gen', 'AQLLexer.g4', 'AQLParser.g4' 
+    doFirst {
+        file('src/gen').mkdirs()
+    }
+}
+
 sourceSets {
     main {
         java {
             srcDir 'src/'
         }
     }
+    test {
+        java {
+            srcDir 'test/'
+        }
+    }
 }
 
+// generate with antlr before compile/run
+compileJava.dependsOn generateAntlrSource
