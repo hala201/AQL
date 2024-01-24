@@ -63,3 +63,73 @@ LOG 'end'
   - we will allow more flexible conditions within `ON` instead of just SUCCESS or ERROR. (As suggested by Prof. Alex)
   - we will likely need one or more rich language feature. (As suggested by Prof. Alex)
 - We will likely need to come up with a more convincing motivation or use-cases for the DSL.
+
+
+# Check-in 2 Report
+## Division of Responsibilities and Components
+1. **Together**: Parser 
+   - Input: AQL Script
+   - Output: AST
+2. **Meng**: API Request Handling and Response for `GET` and `DELETE` requests
+    - Input: `GET`/`DELETE` HTTP request
+    - Output: HTTP response received from backend logic
+3. **Ricky**: API Request Handling and Response for `PUT` and `POST` requests
+    - Input: `PUT`/`POST` HTTP request
+    - Output: HTTP response retrieved from the backend logic
+4. **Kai** : `SET`, Literal Strings, and `LOG` commands
+    - Input: `SET`/`LOG` commands
+    - Output: NA
+5. **Hala**: Chaining: Looping `FOR EACH` 
+    - Input: `FOR EACH` variable `IN`request/requestList
+    - Output: A list of HTTP responses received from backend logic
+6. **Dylan**: Chaining: Conditional `ON ERROR` and `IF/ELSE`
+    - Input: `ON ERROR` or `IF/ELSE` logic
+    - Output: Boolean
+7. **Together**: Mock API for testing
+   - Input: Mock AQL script
+   - Output: Mock AST
+
+## Data and Invariants
+### Data at each interface point: 
+- **Input data**: AQL script
+- **Intermediate data**: parsing/ validating data, result of ANTLR, compile error checks
+- **Output data**:  AST, runtime error checks
+### Invariants over the data:
+- **Syntax rules**: check [AQL.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQL.g4)
+- **Semantic rules**: check [AQL.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQL.g4)
+- **Type safety**: static and dynamic type checks
+
+## Task independence 
+- We will have clear and independent interfaces/classes.
+- We will use mocks if an input relies on an output from another component. 
+- The parser components  and evaluator components interact through AST.
+
+## Testing Plan
+- We plan on dividing test writing into the same sections that we label in the component. Each person will write the tests for their assigned task. 
+- All team members work on end to end/integrated tests at the end to make sure the program functionalities are neat and coherent. 
+
+## Miscellaneous Tasks Performed Jointly
+- Team Management
+- Documentation
+- Syntax Design
+- Brainstorming for use cases
+
+## Timeline
+1. Finalize Grammar + Syntax
+2. Node (classes/interfaces design) implementation (will be completed together)
+- **before check-in 3 (Jan 30) ASAP** 
+3. Components implementation + module tests + integrated tests (will be completed individually)
+- **before check-in 4 (Feb 6)** 
+4. Debug and deliver each component. Continue with integration tests
+5. Final Video discussion
+6. Possible UI?
+- **before check-in 5 (Feb 13)**
+7. Finalize the language
+8. Video filming
+- **Project due (Feb 26)**
+
+## Feedback and Follow-ups:
+- Think about paginating over API queries as a feature.
+- Make design choices about runtime vs compile errors.
+- Plan to work on two user stories.
+- Consider a plan for designing the Mock API together
