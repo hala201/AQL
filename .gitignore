@@ -36,7 +36,7 @@ bin/
 # Ignore Gradle build output directory
 build
 
-gen/*
+src/gen/*
 out/*
 .idea/*
 *.iml
