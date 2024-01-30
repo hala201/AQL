@@ -28,12 +28,9 @@ Before you begin, ensure you have the following installed:
 ## Project Structure
 
 - `src`: Contains the source code for AQL.
-  - `api`: API interaction related code.
   - `ast`: Code for abstract syntax tree structures.
-  - `chain`: Handling of request chaining logic.
-  - `conditional`: Conditional logic implementation.
   - `main`: Entry point of the application.
-  - `parser`: Parsing logic for AQL scripts.
+  - TBD
 - `lib`: External libraries used by the project.
 - `test`: Test scripts and test cases.
-- `syntax.g4`: ANTLR4 grammar file for AQL.
+- `AQLParser.g4` & `AQLLexer`: ANTLR4 grammar files for AQL.

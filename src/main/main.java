@@ -30,19 +30,18 @@ public class main {
                     "        }\n" +
                     "    }\n" +
                     "}";
-        // String aqlInput = 
-        //             "LOG hi\n";
         AQLLexer lexer = new AQLLexer(CharStreams.fromString(aqlInput));
-        for (Token token : lexer.getAllTokens()) {
-            System.out.println(token);
-        }
+        // for (Token token : lexer.getAllTokens()) {
+        //     System.out.println(token);
+        // }
         lexer.reset();
         TokenStream tokens = new CommonTokenStream(lexer);
         AQLParser parser = new AQLParser(tokens);
         AQLParser.ProgramContext tree = parser.program();
-        AQLPrintVisitor visitor = new AQLPrintVisitor();
-        // System.out.println(tree.toStringTree(parser));
-        visitor.visit(tree);
+        System.out.println(tree.toStringTree(parser));
+
+        // AQLPrintVisitor visitor = new AQLPrintVisitor();
+        // visitor.visit(tree);
 
         return tree;
     }

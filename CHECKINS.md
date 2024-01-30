@@ -93,8 +93,7 @@ FOR EACH user IN GET https://api.com/users {
 - **Intermediate data**: parsing/ validating data, result of ANTLR, compile error checks
 - **Output data**:  AST, runtime error checks
 ### Invariants over the data:
-- **Syntax rules**: check [AQL.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQL.g4)
-- **Semantic rules**: check [AQL.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQL.g4)
+- **Syntax rules & Semantic rules**: check [AQLLexer.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQLLexer.g4) & [AQLParser.g4](https://github.students.cs.ubc.ca/CPSC410-2023W-T2/Group2Project1/blob/main/AQLParser.g4)
 - **Type safety**: static and dynamic type checks
 
 ## Task independence 
