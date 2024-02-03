@@ -42,5 +42,5 @@ out/*
 *.iml
 *.class
 
-test.txt
+**.txt
 .antlr/*

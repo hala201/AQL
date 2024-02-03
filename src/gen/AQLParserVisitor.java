@@ -83,18 +83,6 @@ public interface AQLParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDelReq(AQLParser.DelReqContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link AQLParser#onSuccess}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOnSuccess(AQLParser.OnSuccessContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link AQLParser#onError}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOnError(AQLParser.OnErrorContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link AQLParser#condition}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

@@ -128,26 +128,6 @@ public interface AQLParserListener extends ParseTreeListener {
 	 */
 	void exitDelReq(AQLParser.DelReqContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link AQLParser#onSuccess}.
-	 * @param ctx the parse tree
-	 */
-	void enterOnSuccess(AQLParser.OnSuccessContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link AQLParser#onSuccess}.
-	 * @param ctx the parse tree
-	 */
-	void exitOnSuccess(AQLParser.OnSuccessContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link AQLParser#onError}.
-	 * @param ctx the parse tree
-	 */
-	void enterOnError(AQLParser.OnErrorContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link AQLParser#onError}.
-	 * @param ctx the parse tree
-	 */
-	void exitOnError(AQLParser.OnErrorContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link AQLParser#condition}.
 	 * @param ctx the parse tree
 	 */
