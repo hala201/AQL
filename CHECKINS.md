@@ -290,11 +290,11 @@ FOR EACH element IN students{
 - Since checkin 2, we have only made a minor change to onElse rule, to allow for 'SUCCESS' and 'ERROR' for API responses, and we will only allow one onElse to chain with each API requests ((onElse)\* -> (onElse)?).
   - These minor changes do not affect the example snippets we included here.
 - We will likely do as much static check as possible (eg. whether a variable exists or not), but most of the checkings will be done during the evaluation stage.
-  - URI can be dynamic (we can’t know in advance whether the user is valid). It is also not guaranteed whether the request will succeed.
+  - URI can be dynamic. It’s not possible to determine in advance the validity of a user or the success of a request. It is also not guaranteed whether the request will succeed.
   - We will do dynamic checks for loops.
 - We still need to decide how an incorrect program will be reported to the user.
-- We will likely allow assigning list (of JSON) from API requests to variables, but there will not be support to manipulate those variables.
-  - Users may only SET and not make any changes unless SET is used to assign a new value.
+- We will likely allow assigning list of JSON objects got from API responses to variables, but there will not be support to manipulate those variables.
+  - Users may only use SET to  initialize variables and may not make any changes unless SET is used to assign a new value.
 - We will likely allow for in-line comments for convenience, if time permits.
 
 ## Other
@@ -304,4 +304,4 @@ FOR EACH element IN students{
 - Future test plans:
   - After finalizing the AST and visitor patterns, we will be able to write more unit and integration tests.
   - We will add tests for incorrect programs that are not supposed to work.
-  - We will add end-to-end tests and start creating the mock api.
+  - We will add end-to-end tests and start creating the mock api to simulate integration test points.
