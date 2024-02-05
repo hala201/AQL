@@ -1,5 +1,7 @@
 package ast.handler;
 
+import org.json.JSONObject;
+
 import controller.APIService;
 
 public class GetReqHandler extends BaseReqHandler {
@@ -9,7 +11,7 @@ public class GetReqHandler extends BaseReqHandler {
     }
 
     @Override
-    protected Object makeApiCall(String uri) throws Exception {
-        return this.apiService.makeGetRequest(uri);
+    protected Object makeApiCall(String uri, JSONObject params) throws Exception {
+        return this.apiService.makeGetRequest(uri, params);
     }
 }

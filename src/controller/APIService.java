@@ -17,39 +17,56 @@ public class APIService {
     public APIService() {
         this.httpClient = HttpClient.newHttpClient();
     }
+
     // TODO: make sure to handle only JSON response, and throw appropriate exceptions
-    public Object makeGetRequest(String uri) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+    public Object makeGetRequest(String uri, JSONObject json) throws Exception {
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(new URI(uri))
-                .GET()
-                .build();
-        return this.sendRequest(request);
+                .header("Content-Type", "application/json");
+        if (json != null) {
+            requestBuilder.method("GET", HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
+        } else {
+            requestBuilder.GET();
+        }
+        return this.sendRequest(requestBuilder.build());
     }
 
-    public Object makeDeleteRequest(String uri) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+    public Object makeDeleteRequest(String uri, JSONObject json) throws Exception {
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(new URI(uri))
-                .DELETE()
-                .build();
-        return this.sendRequest(request);
+                .header("Content-Type", "application/json");
+        if (json != null) {
+            requestBuilder.method("DELETE", HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
+        } else {
+            requestBuilder.DELETE();
+        }
+        return this.sendRequest(requestBuilder.build());
     }
 
     public Object makePostRequest(String uri, JSONObject json) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(new URI(uri))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8))
-                .build();
-        return this.sendRequest(request);
+                .header("Content-Type", "application/json");
+        if (json != null) {
+            requestBuilder.POST(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
+        } else {
+            // POST with an empty body
+            requestBuilder.POST(HttpRequest.BodyPublishers.noBody());
+        }
+        return this.sendRequest(requestBuilder.build());
     }
 
     public Object makePutRequest(String uri, JSONObject json) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(new URI(uri))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8))
-                .build();
-        return this.sendRequest(request);
+                .header("Content-Type", "application/json");
+        if (json != null) {
+            requestBuilder.PUT(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
+        } else {
+            // PUT empty body
+            requestBuilder.PUT(HttpRequest.BodyPublishers.noBody());
+        }
+        return this.sendRequest(requestBuilder.build());
     }
 
     private Object sendRequest(HttpRequest request) throws Exception {

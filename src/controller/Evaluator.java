@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.PrintWriter;
+import java.rmi.UnexpectedException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +11,9 @@ import ast.Program;
 import ast.Statement;
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.Params;
 import ast.api.Request;
+import ast.api.WithBlock;
 import ast.handler.DelReqHandler;
 import ast.handler.GetReqHandler;
 
@@ -70,7 +73,11 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     public Object visit(GetReq gr, PrintWriter out) {
         IRequestHandler handler = this.handlers.get(gr.getClass());
         if (handler != null) {
-            return handler.handleRequest(gr, out, this.environment, this.memory);
+            try {
+                return handler.handleRequest(gr, out, this.environment, this.memory);
+            } catch (UnexpectedException e) {
+                out.write(e.getMessage());
+            }
         }
         throw new IllegalArgumentException("Unsupported request type");
     }
@@ -79,9 +86,26 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     public Object visit(DelReq dr, PrintWriter out) {
         IRequestHandler handler = this.handlers.get(dr.getClass());
         if (handler != null) {
-            return handler.handleRequest(dr, out, this.environment, this.memory);
+            try {
+                return handler.handleRequest(dr, out, this.environment, this.memory);
+            } catch (UnexpectedException e) {
+                out.write(e.getMessage());
+            }
         }
         throw new IllegalArgumentException("Unsupported request type");
+    }
+
+    @Override
+    public Void visit(WithBlock wb, PrintWriter out) {
+        out.write("doing WITH ");
+        wb.getParams().accept(this, out);
+        return null;
+    }
+
+    @Override
+    public Void visit(Params p, PrintWriter out) {
+        out.write("doing PARAMS ");
+        return null;
     }
 
 }

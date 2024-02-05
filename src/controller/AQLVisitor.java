@@ -4,13 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.json.JSONObject;
 
 import ast.Node;
 import ast.Program;
 import ast.Statement;
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.Params;
 import ast.api.Request;
+import ast.api.WithBlock;
+import controller.helper.*;
 import gen.AQLParser;
 import gen.AQLParserBaseVisitor;
 
@@ -46,43 +50,62 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
     throw new IllegalArgumentException("Unsupported request type");
   }
 
-  private static class URIParts {
-    String head;
-    List<String> body;
-    List<String> tail;
-
-    public URIParts(String head, List<String> body, List<String> tail) {
-          this.head = head;
-          this.body = body;
-          this.tail = tail;
-    }
-  }
-
-  private URIParts parseAndExtractURI(AQLParser.DynamicURIContext ctx) {
-      String head = ctx.URI().getText();
-      List<String> body = new ArrayList<>();
-      List<String> tail = new ArrayList<>();
-      for (AQLParser.DynamicVarContext var : ctx.dynamicVar()) {
-          body.add(var.getText());
-      }
-      for (TerminalNode uri : ctx.URI_TAIL()) {
-          tail.add(uri.getText());
-      }
-      return new URIParts(head, body, tail);
-  }
+  
     
   @Override
   public GetReq visitGetReq(AQLParser.GetReqContext ctx) {
-      URIParts URIparts = this.parseAndExtractURI(ctx.dynamicURI());
-      return new GetReq(URIparts.head, URIparts.body, URIparts.tail);
+      URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
+      JSONObject params = null;
+      if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
+      return new GetReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
 
   @Override
   public DelReq visitDelReq(AQLParser.DelReqContext ctx) {
-      URIParts URIparts = this.parseAndExtractURI(ctx.dynamicURI());
-      return new DelReq(URIparts.head, URIparts.body, URIparts.tail);
+        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
+      JSONObject params = null;
+      if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
+      return new DelReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
   
+@Override
+public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
+        if (ctx.getChildCount() != 4) { 
+            throw new IllegalStateException("Invalid WITH block");
+        }
+        if (!ctx.getChild(1).getText().equals("{")) {
+            throw new IllegalStateException("Invalid WITH block: missing {");
+        }
+        if (!ctx.getChild(2).getClass().equals(AQLParser.ParamsContext.class)) {
+            throw new IllegalStateException("Invalid WITH block: expected a JSON object as parameters");
+        }
+        if (!ctx.getChild(3).getText().equals("}")) {
+            throw new IllegalStateException("Invalid WITH block: missing }");
+        }
+        
+        return new WithBlock(this.visitParams(ctx.params()));
 }
 
+  @Override
+  public Params visitParams(AQLParser.ParamsContext ctx) {
+      JSONObject params = new JSONObject();
+      for (int i = 0; i < ctx.getChildCount(); i++) {
+          String childText = ctx.getChild(i).getText();
+          if (childText.equals(",") || childText.equals(":")) {
+              continue;
+          }
+          String[] parts = childText.split(":");
+          if (parts.length == 2) { 
+              String key = StringParser.stripQuotes(parts[0].trim());
+              String valueText = parts[1].trim();
+              Object value = valueText.startsWith("\"") || valueText.startsWith("\'") ? StringParser.stripQuotes(valueText) : StringParser.parseValue(valueText);
+              params.put(key, value);
+          }
+      }
+      if (params.isEmpty()) {
+        throw new IllegalStateException("Invalid parameters: expected a JSON Object");
+      }
+      return new Params(params);
+  }
 
+}

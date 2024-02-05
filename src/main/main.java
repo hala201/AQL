@@ -18,6 +18,7 @@ public class main {
     public static void main(String[] args) throws IOException {
         System.out.println("Hello World!");
         String aqlInput = """
+        GET https://65y4r.wiremockapi.cloud/users/{user.id} WITH { "id" : 123, "value": "abc-def-ghi" }
         GET https://65y4r.wiremockapi.cloud/users/{user.id}/tasks
         GET https://65y4r.wiremockapi.cloud/users
         DELETE https://65y4r.wiremockapi.cloud/users
