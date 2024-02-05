@@ -26,87 +26,56 @@ public class antlrParserTest {
     // TBD: update failing tests due to changes in grammar
     @Test
     public void testSimpleLog() {
-        this.testParser("LOG 'Hello World'", "(program (statement (log LOG (string 'Hello World'))))");
+        this.testParser(testData.simpleLog_input, testData.simpleLog_parse_output);
     }
 
     @Test
     public void testLogWithVariable() {
-        this.testParser("LOG variableName", "(program (statement (log LOG (value variableName))))");
+        this.testParser(testData.LogWithVariable_input, testData.LogWithVariable_parse_output);
     }
 
     @Test
     public void testSimpleGet() {
-        this.testParser("GET https://api.example.com/data", "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data)))))");
+        this.testParser(testData.simpleGet_input, testData.simpleGet_parse_output);
     }
 
     @Test
     public void testSimplePut() {
-        this.testParser("PUT https://api.example.com/data",
-                   "(program (statement (request (putReq PUT (dynamicURI https://api.example.com/data)))))");
+        this.testParser(testData.simplePut_input, testData.simplePut_parse_output);
     }
 
     @Test
     public void testSimplePost() {
-        this.testParser("POST https://api.example.com/data",
-                   "(program (statement (request (postReq POST (dynamicURI https://api.example.com/data)))))");
+        this.testParser(testData.simplePost_input, testData.simplePost_parse_output);
     }
 
     @Test
     public void testSimpleDelete() {
-        this.testParser("DELETE https://api.example.com/data",
-                   "(program (statement (request (delReq DELETE (dynamicURI https://api.example.com/data)))))");
+        this.testParser(testData.simpleDelete_input, testData.simpleDelete_parse_output);
     }
 
     @Test
     public void testWithBlock() {
-        this.testParser("""
-        GET https://api.example.com/data WITH { "param1": value1, "param2": 'value2' }
-                """,
-                   "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data) (withBlock WITH { (params (param (string \"param1\") : (value value1)) , (param (string \"param2\") : (string 'value2'))) })))))");
+        this.testParser(testData.withBlock_input, testData.withBlock_parse_output);
     }
 
     @Test
     public void testOnElseCondition() {
-        this.testParser("GET https://api.example.com/data ON variable1 == variable2 { LOG variable1 } ELSE { LOG 'Error' }",
-                   "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data) (onElse ON (condition (value variable1) == (value variable2)) { (statement (log LOG (value variable1))) } ELSE { (statement (log LOG (string 'Error'))) })))))");
+        this.testParser(testData.onElseCondition_input, testData.onElseCondition_parse_output);
     }
 
     @Test
     public void testSetStatement() {
-        this.testParser("SET GET https://api.example.com/data AS myData",
-                   "(program (statement (set SET (request (getReq GET (dynamicURI https://api.example.com/data))) AS myData)))");
+        this.testParser(testData.setStatement_input, testData.setStatement_parse_output);
     }
 
     @Test
     public void testLoopStatement() {
-        this.testParser("FOR EACH user IN GET https://api.example.com/users { LOG user.name }",
-                   "(program (statement (loop FOR EACH user IN (request (getReq GET (dynamicURI https://api.example.com/users))) { (statement (log LOG (value (dynamicVar user . name)))) })))");
+        this.testParser(testData.loopStatement_input, testData.loopStatement_parse_output);
     }
 
     @Test
     public void testComplex1() {
-        this.testParser("""
-        FOR EACH user IN GET https://api.com/users {
-            LOG user.name
-            SET GET https://api.com/users/{user.id}/tasks AS TaskList
-            SET 'failed' AS failMsg
-        
-            FOR EACH task IN TaskList {
-                PUT https://api.com/tasks/{task.id} WITH { "status": 'completed' }
-        
-                POST https://api.com/send WITH {
-                    "userId": user.id,
-                    "message": 'Task {task.id} completed'
-                }
-        
-                ON task.sth==false {
-                    DELETE https://api.com/tasks/{task.id}
-                } ELSE {
-                    LOG failMsg
-                }
-            }
-        }
-                """,
-                   "(program (statement (loop FOR EACH user IN (request (getReq GET (dynamicURI https://api.com/users))) { (statement (log LOG (value (dynamicVar user . name)))) (statement (set SET (request (getReq GET (dynamicURI https://api.com/users/ (dynamicVar { user . id }) /tasks))) AS TaskList)) (statement (set SET (string 'failed') AS failMsg)) (statement (loop FOR EACH task IN TaskList { (statement (request (putReq PUT (dynamicURI https://api.com/tasks/ (dynamicVar { task . id })) (withBlock WITH { (params (param (string \"status\") : (string 'completed'))) })))) (statement (request (postReq POST (dynamicURI https://api.com/send) (withBlock WITH { (params (param (string \"userId\") : (value (dynamicVar user . id))) , (param (string \"message\") : (string 'Task {task.id} completed'))) }) (onElse ON (condition (value (dynamicVar task . sth)) == (value false)) { (statement (request (delReq DELETE (dynamicURI https://api.com/tasks/ (dynamicVar { task . id }))))) } ELSE { (statement (log LOG (value failMsg))) })))) })) })))");
+        this.testParser(testData.complex1_input, testData.complex1_parse_output);
     }
 }
