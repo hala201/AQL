@@ -11,6 +11,8 @@ import ast.Program;
 import ast.Statement;
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.PutReq;
+import ast.api.PostReq;
 import ast.api.Params;
 import ast.api.Request;
 import ast.api.WithBlock;
@@ -41,12 +43,11 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
       return new Request(this.visitGetReq(ctx.getReq()));
     } else if (ctx.delReq() != null) {
       return new Request(this.visitDelReq(ctx.delReq()));
-    } 
-  // else if (ctx.putReq() != null) {
-  //     return new Request(this.visitPutReq(ctx.putReq()));
-  // } else (ctx.postReq() != null) {
-  //     return new Request(this.visitPostReq(ctx.postReq()));
-  // }
+    } else if (ctx.putReq() != null) {
+       return new Request(this.visitPutReq(ctx.putReq()));
+    } else if (ctx.postReq() != null) {
+       return new Request(this.visitPostReq(ctx.postReq()));
+    }
     throw new IllegalArgumentException("Unsupported request type");
   }
 
@@ -67,6 +68,22 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
       if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
       return new DelReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
+
+    @Override
+    public PutReq visitPutReq(AQLParser.PutReqContext ctx) {
+        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
+        JSONObject params = null;
+        if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
+        return new PutReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+    }
+
+    @Override
+    public PostReq visitPostReq(AQLParser.PostReqContext ctx) {
+        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
+        JSONObject params = null;
+        if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
+        return new PostReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+    }
   
 @Override
 public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {

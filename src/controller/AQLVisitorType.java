@@ -4,6 +4,8 @@ import ast.Program;
 import ast.Statement;
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.PutReq;
+import ast.api.PostReq;
 import ast.api.Params;
 import ast.api.Request;
 import ast.api.WithBlock;
@@ -19,8 +21,11 @@ public interface AQLVisitorType<T,U>  {
 
     U visit(DelReq dr, T t);
 
+    U visit(PutReq pur, T t);
+
+    U visit(PostReq por, T t);
+
     U visit(WithBlock wb, T t);
 
     U visit(Params p, T t);
-
 } 

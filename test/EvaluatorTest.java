@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.PutReq;
+import ast.api.PostReq;
 import controller.Evaluator;
 
 class EvaluatorTest {
@@ -94,5 +96,4 @@ class EvaluatorTest {
         assertEquals(JSONObject.class, result.getClass());
         assertEquals(new JSONObject("{\"message\": \"Task 123 deleted successfully\"}").toString(), result.toString());
     }
-
 }

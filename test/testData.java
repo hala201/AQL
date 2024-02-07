@@ -8,11 +8,11 @@ public class testData {
     static String simpleGet_input = "GET https://api.example.com/data";
     static String simpleGet_parse_output = "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data)))))";
 
-    static String simplePut_input = "PUT https://api.example.com/data";
-    static String simplePut_parse_output = "(program (statement (request (putReq PUT (dynamicURI https://api.example.com/data)))))";
+    static String simplePut_input = "PUT https://8k06e.wiremockapi.cloud/json/2 WITH { \"id\": 12345, \"value\": \"abc-def-ghi\" }";
+    static String simplePut_parse_output = "(program (statement (request (putReq PUT (dynamicURI https://8k06e.wiremockapi.cloud/json/2) (withBlock WITH { (params (param (string \"id\") : (value 12345)) , (param (string \"value\") : (string \"abc-def-ghi\"))) })))))";
 
-    static String simplePost_input = "POST https://api.example.com/data";
-    static String simplePost_parse_output = "(program (statement (request (postReq POST (dynamicURI https://api.example.com/data)))))";
+    static String simplePost_input = "POST https://8k06e.wiremockapi.cloud/json WITH { \"id\": 12345, \"value\": \"abc-def-ghi\" }";
+    static String simplePost_parse_output = "(program (statement (request (postReq POST (dynamicURI https://8k06e.wiremockapi.cloud/json) (withBlock WITH { (params (param (string \"id\") : (value 12345)) , (param (string \"value\") : (string \"abc-def-ghi\"))) })))))";
 
     static String simpleDelete_input = "DELETE https://api.example.com/data";
     static String simpleDelete_parse_output = "(program (statement (request (delReq DELETE (dynamicURI https://api.example.com/data)))))";

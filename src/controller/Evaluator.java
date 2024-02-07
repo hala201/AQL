@@ -11,11 +11,15 @@ import ast.Program;
 import ast.Statement;
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.PutReq;
+import ast.api.PostReq;
 import ast.api.Params;
 import ast.api.Request;
 import ast.api.WithBlock;
 import ast.handler.DelReqHandler;
 import ast.handler.GetReqHandler;
+import ast.handler.PutReqHandler;
+import ast.handler.PostReqHandler;
 
 public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
@@ -29,7 +33,8 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     public Evaluator() {
         this.handlers.put(GetReq.class, new GetReqHandler(this.apiService));
         this.handlers.put(DelReq.class, new DelReqHandler(this.apiService));
-
+        this.handlers.put(PutReq.class, new PutReqHandler(this.apiService));
+        this.handlers.put(PostReq.class, new PostReqHandler(this.apiService));
         // TODO: remove, this is a mock for testing dynamicURI
         this.environment.put("user", this.memptr);
         this.memory.put(this.memptr++, new JSONObject("{\"id\": \"123\"}"));
@@ -88,6 +93,32 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         if (handler != null) {
             try {
                 return handler.handleRequest(dr, out, this.environment, this.memory);
+            } catch (UnexpectedException e) {
+                out.write(e.getMessage());
+            }
+        }
+        throw new IllegalArgumentException("Unsupported request type");
+    }
+
+    @Override
+    public Object visit(PutReq pur, PrintWriter out) {
+        IRequestHandler handler = this.handlers.get(pur.getClass());
+        if (handler != null) {
+            try {
+                return handler.handleRequest(pur, out, this.environment, this.memory);
+            } catch (UnexpectedException e) {
+                out.write(e.getMessage());
+            }
+        }
+        throw new IllegalArgumentException("Unsupported request type");
+    }
+
+    @Override
+    public Object visit(PostReq por, PrintWriter out) {
+        IRequestHandler handler = this.handlers.get(por.getClass());
+        if (handler != null) {
+            try {
+                return handler.handleRequest(por, out, this.environment, this.memory);
             } catch (UnexpectedException e) {
                 out.write(e.getMessage());
             }
