@@ -140,4 +140,3 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     }
 
 }
-

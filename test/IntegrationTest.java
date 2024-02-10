@@ -49,14 +49,14 @@ class IntegrationTest {
 
     @Test
     void testSimplePost() {
-        inputTest(testData.simplePost_input,
+        this.inputTest(testData.simplePost_input,
                 testData.simplePost_integration_output,
                 "simple post test");
     }
 
     @Test
     void testSimplePut() {
-        inputTest(testData.simplePut_input,
+        this.inputTest(testData.simplePut_input,
                 testData.simplePut_integration_output,
                 "simple put test");
     }

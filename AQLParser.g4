@@ -3,8 +3,8 @@ parser grammar AQLParser;
 options { tokenVocab=AQLLexer; }
 
 program         : statement+ ;
-statement       : request | loop | log | set ;
-loop            : FOR_EACH (dynamicVar | VARIABLE) IN (request | dynamicVar | VARIABLE) OPEN_BRACE statement+ CLOSE_BRACE ;
+statement       : request | loop | log | set | onElse;
+loop            : FOR_EACH VARIABLE IN (getReq | dynamicVar | VARIABLE) OPEN_BRACE statement+ CLOSE_BRACE ;
 set             : SET (request | value | string) AS VARIABLE ;
 log             : LOG (value | string) ;
 onElse          : ON condition OPEN_BRACE statement+ CLOSE_BRACE (ELSE OPEN_BRACE statement+ CLOSE_BRACE)? ;

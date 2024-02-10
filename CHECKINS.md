@@ -3,6 +3,7 @@
 - [Check-in 1 Report](#check-in-1-report)
 - [Check-in 2 Report](#check-in-2-report)
 - [Check-in 3 Report](#check-in-3-report)
+- [Check-in 4 Report](#check-in-4-report)
 
 # Check-in 1 Report
 
@@ -294,7 +295,7 @@ FOR EACH element IN students{
   - We will do dynamic checks for loops.
 - We still need to decide how an incorrect program will be reported to the user.
 - We will likely allow assigning list of JSON objects got from API responses to variables, but there will not be support to manipulate those variables.
-  - Users may only use SET to  initialize variables and may not make any changes unless SET is used to assign a new value.
+  - Users may only use SET to initialize variables and may not make any changes unless SET is used to assign a new value.
 - We will likely allow for in-line comments for convenience, if time permits.
 
 ## Other
@@ -305,3 +306,58 @@ FOR EACH element IN students{
   - After finalizing the AST and visitor patterns, we will be able to write more unit and integration tests.
   - We will add tests for incorrect programs that are not supposed to work.
   - We will add end-to-end tests and start creating the mock api to simulate integration test points.
+
+# Check-in 4 Report
+
+We will use antlr for lexing and parsing. Then, we will design our own custom nodes, visitor, and evaluator. Some factories and interfaces are also used to refactor codes.
+
+## New/Changes to designs:
+
+- Allowing users to set a JSON Object to a variable to imitate a List data structure as inspired by the user study. eg. `SET {‘1’: “ben”, ‘2’: 10} AS List`
+
+## Status of implementation.
+
+### Component-wise progress
+
+- GET/DEL/WITH: Finished the component and is working with `WITH`. `WITH` is more thoroughly handled in terms of error/bad cases. However, I still need to handle the error/bad cases such as below:
+  - wrong format (non JSON)
+  - trying to access non existent variable
+  - static checks for syntax of different requests
+  - API doesn't exist (404) Response errors
+  - 500 Response errors
+  - 400 Response errors
+- PUT/POST: Finished API functionality and integrated with the design structure of GET/DELETE. Created the corresponding testsets including functionality test and integration test.
+- Loop: Modified the grammar and finished implementation, currently debugging the following:
+  - Local scope
+  - failing get request handling
+  - parsing a non iterable error
+  - using an undeclared iterable
+- ON/ELSE: Added ON/ELSE & Condition functionality, more refinement needed. Created visitor tests (currently not passing need changes to statement). Slight change in Parser rules.
+- SET/LOG: Modified the grammar to prevent the potential infinite recursion for LOG keyword, finished log's implementation, currently working on implementing the logic of chained set with request. I still need to work on the following:
+  - debugging the logic of chained set with request
+  - variable assignment for json object or json string
+  - response error handling for set
+
+### Tests
+
+- GET/DEL/WITH: Functionality unit tests are passing. No failing testcases so far. More tests for error cases will be added.
+- PUT/POST: Functionality unit and simple integration (end-to-end) tests are passing. No failing testcases so far
+- Loop: Some unit tests are passing, parsing tests are failing.
+- ON/ELSE: Created visitor tests (currently not passing need changes to statement).
+- SET/LOG: Created unit tests, unit tests for SET are not passing.
+
+We still need to write/add more:
+
+- Integration test
+- Complex Mock API test
+
+## Final user study plan
+
+We will give a more comprehensive instructions and a bit more complicated task that would involve using various commands together, similar to a coding interview question. In other words, there will be step-by-step instructions, what to expect of input/output at each stage, and mock web APIs that would actually return the things the users will need. We are also thinking of having the user interact with syntax tests and modify their code as per the tests passing. We will continue to find out target users (backend developers).
+
+## Timeline
+
+The general plan is to have implementation ready by Friday, Feb 9th. We also plan to have debugging/refining phase from Feb 9th - 16th. Ideally, we want to have something that fully works by Feb 16th. We plan to have the second User Study + More testing Feb 16th - 19th.
+
+Plans for integration/end-to-end testing (Feb 9th-16th)
+Integration tests will be gradually added from this week (Feb 9th-16th)
