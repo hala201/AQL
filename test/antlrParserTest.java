@@ -71,7 +71,7 @@ public class antlrParserTest {
 
     @Test
     public void testLoopStatement() {
-        this.testParser(testData.loopStatement_input, testData.loopStatement_parse_output);
+        this.testParser(testData.loopStatement_Valid_input, testData.loopStatement_parse_output);
     }
 
     @Test

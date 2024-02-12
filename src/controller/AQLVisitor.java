@@ -2,7 +2,11 @@ package controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import ast.Value;
+import ast.loop.Loop;
+import ast.loop.Variable;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.json.JSONObject;
 
@@ -33,7 +37,12 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   
   @Override
   public Statement visitStatement(AQLParser.StatementContext ctx) {
-    return new Statement(this.visitRequest(ctx.request()));
+    if (ctx.request() != null) {
+        return new Statement(this.visitRequest(ctx.request()));
+    } else if (ctx.loop() != null) {
+        return new Statement(this.visitLoop(ctx.loop()));
+    }
+      throw new IllegalArgumentException("Unsupported statement type");
   }
 
   @Override
@@ -123,6 +132,33 @@ public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
         throw new IllegalStateException("Invalid parameters: expected a JSON Object");
       }
       return new Params(params);
+  }
+
+  @Override
+    public Loop visitLoop(AQLParser.LoopContext ctx) {
+      Variable loopControlVariable = new Variable(ctx.VARIABLE(0).getText(), new JSONObject());
+      GetReq iterable = null;
+      if (ctx.getReq() != null) {
+          iterable = visitGetReq(ctx.getReq());
+      } else if (ctx.dynamicVar() != null) {
+          iterable = (GetReq) ctx.dynamicVar().accept(this);
+      } else if (ctx.VARIABLE(1) != null){
+        iterable = (GetReq) ctx.VARIABLE(1).accept(this);
+      }
+      // TODO: To be uncommented once SET is ready
+      // if (iterable == null) throw new IllegalArgumentException("FOR EACH: Iterable is Null or undefined");
+      List<Statement> statements = new ArrayList<>();
+      for (AQLParser.StatementContext sCtx : ctx.statement()) {
+          Statement statement = (Statement) sCtx.accept(this);
+          statements.add(statement);
+      }
+      Program loopBody = new Program(statements);
+      return new Loop(iterable, loopControlVariable, loopBody);
+  }
+
+    @Override
+    public Value visitValue(AQLParser.ValueContext ctx) {
+      return new Variable(ctx.VARIABLE().getText(), new JSONObject());
   }
 
 }

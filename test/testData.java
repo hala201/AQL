@@ -34,8 +34,25 @@ public class testData {
     static String setStatement_input = "SET GET https://api.example.com/data AS myData";
     static String setStatement_parse_output = "(program (statement (set SET (request (getReq GET (dynamicURI https://api.example.com/data))) AS myData)))";
 
-    static String loopStatement_input = "FOR EACH user IN GET https://api.example.com/users { LOG user.name }";
-    static String loopStatement_parse_output = "(program (statement (loop FOR EACH user IN (request (getReq GET (dynamicURI https://api.example.com/users))) { (statement (log LOG (value (dynamicVar user . name)))) })))";
+    static String loopStatement_Valid_input = "FOR EACH user IN GET https://api.example.com/users { GET https://api.example.com/data }";
+    static String loopStatement_parse_output = "(program (statement (loop FOR EACH user IN (getReq GET (dynamicURI https://api.example.com/users)) { (statement (log LOG (value (dynamicVar user . name)))) })))";
+
+    static String loopStatement_Valid_DeclaredIterable_input = "FOR EACH user IN users { GET https://api.example.com/data }";
+    static String loopStatement_Valid_LongerBody_input = """
+            FOR EACH user IN users { 
+            GET https://api.example.com/data 
+            POST https://api.example.com/data 
+            }
+            """;
+
+    static String loopStatement_Invalid_EmptyBody_input = "FOR EACH user IN GET https://api.example.com/users {  }";
+    static String loopStatement_Invalid_NoControlVariable_input = "FOR EACH IN GET https://api.example.com/users { LOG user.name }";
+    static String loopStatement_Invalid_NoIN_input = "FOR EACH user GET https://api.example.com/users { LOG user.name }";
+    static String loopStatement_Invalid_NoEACH_input = "FOR user IN GET https://api.example.com/users { LOG user.name }";
+    static String loopStatement_Invalid_NoIterable_input = "FOR EACH user IN { LOG user.name }";
+    static String loopStatement_Invalid_NoOpeningBracket_input = "FOR EACH user IN GET https://api.example.com/users LOG user.name }";
+    static String loopStatement_Invalid_NoClosingBracket_input = "FOR EACH user IN GET https://api.example.com/users { LOG user.name";
+    static String loopStatement_Invalid_NonIterable_input = "FOR EACH user IN POST https://api.example.com/users { LOG user.name}";
 
     static String complex1_input = """
         FOR EACH user IN GET https://api.com/users {

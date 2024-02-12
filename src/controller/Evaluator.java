@@ -4,7 +4,14 @@ import java.io.PrintWriter;
 import java.rmi.UnexpectedException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
+import ast.Value;
+import ast.loop.Loop;
+import ast.loop.Variable;
+import controller.helper.LocalScope;
+import controller.helper.StringParser;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ast.Program;
@@ -27,6 +34,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     private final Map<Integer, JSONObject> memory = new HashMap<>();
     private int memptr = 0;
     private APIService apiService = new APIService();
+    private Stack<Map<String, Integer>> localEnvironmentStack = new Stack<>();
     // <CLASS of subclass of IRequest, subclass of IRequestHandler> 
     Map<Class<? extends IRequest>, IRequestHandler> handlers = new HashMap<>();
 
@@ -47,6 +55,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     public Map<Integer, JSONObject> getMemory() {
         return this.memory;
     }
+
 
     // TODO: remove most of out.write(), they are for debugging
     @Override
@@ -136,6 +145,53 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     @Override
     public Void visit(Params p, PrintWriter out) {
         out.write("doing PARAMS ");
+        return null;
+    }
+
+    @Override
+    public Object visit(Loop loop, PrintWriter out) {
+        out.write("doing FOR EACH\n");
+        LocalScope.pushScope(localEnvironmentStack, environment);
+        Variable loopControlVariable = loop.getLoopControlVariable();
+        GetReq getReq = loop.getIterable();
+        Object iterableData = this.visit(getReq, out);
+
+        if (!(iterableData instanceof JSONObject) && !(iterableData instanceof JSONArray)) {
+            throw new IllegalArgumentException("FOR EACH: Expected JSONObject or JSONArray as iterable data");
+        }
+
+        JSONArray dataArray = iterableData instanceof JSONObject ?
+                new JSONArray().put((JSONObject) iterableData) : (JSONArray) iterableData;
+
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject entryObject = dataArray.getJSONObject(i);
+            for (Map.Entry<String, Object> entry : entryObject.toMap().entrySet()) {
+                JSONObject entryValue = new JSONObject().put(entry.getKey(), entry.getValue());
+                loopControlVariable.setVariableContent(entryValue);
+
+                int currentMemPtr = memptr;
+                memory.put(currentMemPtr, entryValue);
+                environment.put(loopControlVariable.getVariableName(), currentMemPtr);
+                memptr++;
+
+                //execute loop body
+                Program loopBody = loop.getLoopBody();
+                if (loopBody.getTasks().size() == 0) throw new IllegalArgumentException("FOR EACH: Empty loop body");
+                this.visit(loopBody, out);
+
+                memory.remove(currentMemPtr);
+            }
+        }
+
+        LocalScope.popScope(localEnvironmentStack);
+        return null;
+    }
+
+
+    @Override
+    public Object visit(Value v, PrintWriter out) {
+        out.print("doing VARIABLE\n");
+        v.accept(this, out);
         return null;
     }
 
