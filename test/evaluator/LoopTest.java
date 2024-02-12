@@ -1,3 +1,4 @@
+package evaluator;
 import ast.Node;
 import ast.Program;
 import ast.Statement;
@@ -12,7 +13,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +21,10 @@ import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class loopUnitTest {
+public class LoopTest {
     private Evaluator evaluator;
     private PrintWriter out;
+    private StringWriter outString;
     private List<Statement> statements;
     private GetReq iterable;
     private Loop loop;
@@ -30,12 +32,13 @@ public class loopUnitTest {
 
     @BeforeEach
     void setUp() {
-        evaluator = new Evaluator();
-        out = new PrintWriter(System.out);
+        this.evaluator = new Evaluator();
+        this.out = new PrintWriter(System.out);
+        this.outString = new StringWriter();
 
-        statements = new ArrayList<>();
-        iterable = new GetReq(null, null, null, null);
-        loop = new Loop(iterable, new Variable("user", new JSONObject()), new Program(statements));
+        this.statements = new ArrayList<>();
+        this.iterable = new GetReq(null, null, null, null);
+        this.loop = new Loop(this.iterable, new Variable("user", new JSONObject()), new Program(this.statements));
 
         this.evaluator.getEnvironment().put("user", 1);
         this.evaluator.getMemory().put(1, new JSONObject("{\"id\":\"123\"}"));
@@ -43,83 +46,83 @@ public class loopUnitTest {
     }
 
     @Test
-    void testLoopNonIterable() {
+    void testLoopBadResponse() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/admins/", List.of("{user.id}"), List.of("/tasks"), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> evaluator.visit(loop, out));
-        assertTrue(thrown.getMessage().contains("FOR EACH: Expected JSONObject or JSONArray as iterable data"));
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> this.evaluator.visit(this.loop, this.out));
+        assertTrue(thrown.getMessage().contains("Request Error: API call failed: Error: HTTP 404"));
     }
 
     @Test
     void testLoopSuccessfulOneIteration() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
         Statement s1 = new Statement(new GetReq("https://65y4r.wiremockapi.cloud/users/tasks2", List.of(), List.of(), null));
-        statements.add(s1);
-        loop.setLoopBody(new Program(statements));
+        this.statements.add(s1);
+        this.loop.setLoopBody(new Program(this.statements));
 
-        evaluator.visit(loop, out);
-        assertEquals(loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task1\":\"haha\"}").toString());
+        this.evaluator.visit(this.loop, this.out);
+        assertEquals(this.loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task1\":\"haha\"}").toString());
     }
 
     @Test
     void testLoopSuccessfulManyIterations() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/tasks2", List.of(), List.of(), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
         Statement s1 = new Statement(new GetReq("https://65y4r.wiremockapi.cloud/users/tasks2", List.of(), List.of(), null));
-        statements.add(s1);
-        loop.setLoopBody(new Program(statements));
+        this.statements.add(s1);
+        this.loop.setLoopBody(new Program(this.statements));
 
-        evaluator.visit(loop, out);
-        assertEquals(loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task2\":\"haha\"}").toString());
+        this.evaluator.visit(this.loop, this.out);
+        assertEquals(this.loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task2\":\"haha\"}").toString());
     }
 
     @Test
     void testLoopEmptyBody() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> evaluator.visit(loop, out));
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> this.evaluator.visit(this.loop, this.out));
         assertTrue(thrown.getMessage().contains("FOR EACH: Empty loop body"));
     }
 
     @Test
     void testEvaluateLoopBodySuccessfulCommands() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/tasks2", List.of(), List.of(), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
         Statement s1 = new Statement(new GetReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null));
         Statement s2 = new Statement(new DelReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null));
         Statement s3 = new Statement(new PostReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null));
         Statement s4 = new Statement(new PostReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null));
 
-        statements.add(s1);
-        statements.add(s2);
-        statements.add(s3);
-        statements.add(s4);
+        this.statements.add(s1);
+        this.statements.add(s2);
+        this.statements.add(s3);
+        this.statements.add(s4);
 
-        loop.setLoopBody(new Program(statements));
+        this.loop.setLoopBody(new Program(this.statements));
 
-        evaluator.visit(loop, out);
-        assertEquals(loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task2\":\"haha\"}").toString());
+        this.evaluator.visit(this.loop, this.out);
+        assertEquals(this.loop.getLoopControlVariable().getVariableContent().toString(), new JSONObject("{\"task2\":\"haha\"}").toString());
     }
 
     @Test
     void testEvaluateLoopBodyUnsuccessfulCommands() {
         GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/tasks2", List.of(), List.of(), null);
-        loop.setIterable(getReq);
+        this.loop.setIterable(getReq);
         Statement s1 = new Statement(new GetReq("https://65y4r.wiremockapi.cloud/admins/", List.of(), List.of(), null));
         Statement s2 = new Statement(new DelReq(null, null, null, null));
         Statement s3 = new Statement(new PostReq(null, null, null, null));
         Statement s4 = new Statement(new PostReq(null, null, null, null));
 
-        statements.add(s1);
-        statements.add(s2);
-        statements.add(s3);
-        statements.add(s4);
+        this.statements.add(s1);
+        this.statements.add(s2);
+        this.statements.add(s3);
+        this.statements.add(s4);
 
-        loop.setLoopBody(new Program(statements));
-
-        assertThrows(NullPointerException.class, () -> evaluator.visit(loop, out));
+        this.loop.setLoopBody(new Program(this.statements));
+        this.evaluator.visit(this.loop, new PrintWriter(this.outString));
+        assertTrue(this.outString.toString().contains("Request Error: API call failed: Error: HTTP 404"));
     }
 }

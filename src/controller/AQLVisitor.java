@@ -1,26 +1,28 @@
 package controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.function.Function;
 
-import ast.Value;
-import ast.loop.Loop;
-import ast.loop.Variable;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.json.JSONObject;
 
 import ast.Node;
 import ast.Program;
 import ast.Statement;
+import ast.Value;
 import ast.api.DelReq;
 import ast.api.GetReq;
-import ast.api.PutReq;
-import ast.api.PostReq;
 import ast.api.Params;
+import ast.api.PostReq;
+import ast.api.PutReq;
 import ast.api.Request;
 import ast.api.WithBlock;
-import controller.helper.*;
+import ast.loop.Loop;
+import ast.loop.Variable;
+import controller.helper.StringParser;
+import controller.helper.URIParts;
 import gen.AQLParser;
 import gen.AQLParserBaseVisitor;
 
@@ -47,70 +49,80 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
 
   @Override
   public Request visitRequest(AQLParser.RequestContext ctx) {
-    
-    if (ctx.getReq() != null) {
-      return new Request(this.visitGetReq(ctx.getReq()));
-    } else if (ctx.delReq() != null) {
-      return new Request(this.visitDelReq(ctx.delReq()));
-    } else if (ctx.putReq() != null) {
-       return new Request(this.visitPutReq(ctx.putReq()));
-    } else if (ctx.postReq() != null) {
-       return new Request(this.visitPostReq(ctx.postReq()));
-    }
-    throw new IllegalArgumentException("Unsupported request type");
-  }
+      Map<Function<AQLParser.RequestContext, Boolean>, Function<AQLParser.RequestContext, Request>> strategyMap = new HashMap<>();
+      
+      // use Strategy 
+      strategyMap.put(c -> c.getReq() != null, c  -> new Request(this.visitGetReq(c.getReq())));
+      strategyMap.put(c -> c.delReq() != null, c  -> new Request(this.visitDelReq(c.delReq())));
+      strategyMap.put(c -> c.putReq() != null, c  -> new Request(this.visitPutReq(c.putReq())));
+      strategyMap.put(c -> c.postReq() != null, c -> new Request(this.visitPostReq(c.postReq())));
 
+      for (Map.Entry<Function<AQLParser.RequestContext, Boolean>, Function<AQLParser.RequestContext, Request>> entry : strategyMap.entrySet()) {
+          if (entry.getKey().apply(ctx)) {
+              return entry.getValue().apply(ctx);
+          }
+      }
+
+      throw new IllegalStateException("Unsupported request type");
+  }
   
-    
   @Override
   public GetReq visitGetReq(AQLParser.GetReqContext ctx) {
-      URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
-      JSONObject params = null;
-      if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
-      return new GetReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+    URIParts URIparts = new URIParts(ctx.dynamicURI());
+    JSONObject params = null;
+    if (ctx.withBlock() != null) { 
+      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+    }
+    return new GetReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
 
   @Override
   public DelReq visitDelReq(AQLParser.DelReqContext ctx) {
-        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
-      JSONObject params = null;
-      if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
-      return new DelReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+    URIParts URIparts = new URIParts(ctx.dynamicURI());
+    JSONObject params = null;
+    if (ctx.withBlock() != null) { 
+      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+    }
+    return new DelReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
 
-    @Override
-    public PutReq visitPutReq(AQLParser.PutReqContext ctx) {
-        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
-        JSONObject params = null;
-        if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
-        return new PutReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+  @Override
+  public PutReq visitPutReq(AQLParser.PutReqContext ctx) {
+    URIParts URIparts = new URIParts(ctx.dynamicURI());
+    JSONObject params = null;
+    if (ctx.withBlock() != null) { 
+      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
     }
+    return new PutReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+  }
 
-    @Override
-    public PostReq visitPostReq(AQLParser.PostReqContext ctx) {
-        URIParts URIparts = URIParts.parseAndExtractURI(ctx.dynamicURI());
-        JSONObject params = null;
-        if (ctx.withBlock() != null) { params = this.visitWithBlock(ctx.withBlock()).getParams().getContent(); }
-        return new PostReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+  @Override
+  public PostReq visitPostReq(AQLParser.PostReqContext ctx) {
+    URIParts URIparts = new URIParts(ctx.dynamicURI());
+    JSONObject params = null;
+    if (ctx.withBlock() != null) { 
+      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
     }
-  
-@Override
-public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
-        if (ctx.getChildCount() != 4) { 
-            throw new IllegalStateException("Invalid WITH block");
-        }
-        if (!ctx.getChild(1).getText().equals("{")) {
-            throw new IllegalStateException("Invalid WITH block: missing {");
-        }
-        if (!ctx.getChild(2).getClass().equals(AQLParser.ParamsContext.class)) {
-            throw new IllegalStateException("Invalid WITH block: expected a JSON object as parameters");
-        }
-        if (!ctx.getChild(3).getText().equals("}")) {
-            throw new IllegalStateException("Invalid WITH block: missing }");
-        }
-        
-        return new WithBlock(this.visitParams(ctx.params()));
-}
+    return new PostReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
+  }
+    
+  @Override
+  public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
+    if (ctx.getChildCount() != 4) { 
+      throw new IllegalStateException("Invalid WITH block");
+    }
+    if (!ctx.getChild(1).getText().equals("{")) {
+      throw new IllegalStateException("Invalid WITH block: missing {");
+    }
+    if (!ctx.getChild(2).getClass().equals(AQLParser.ParamsContext.class)) {
+      throw new IllegalStateException("Invalid WITH block: expected a JSON object as parameters");
+    }
+    if (!ctx.getChild(3).getText().equals("}")) {
+      throw new IllegalStateException("Invalid WITH block: missing }");
+    }
+          
+    return new WithBlock(this.visitParams(ctx.params()));
+  }
 
   @Override
   public Params visitParams(AQLParser.ParamsContext ctx) {
@@ -139,7 +151,7 @@ public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
       Variable loopControlVariable = new Variable(ctx.VARIABLE(0).getText(), new JSONObject());
       GetReq iterable = null;
       if (ctx.getReq() != null) {
-          iterable = visitGetReq(ctx.getReq());
+          iterable = this.visitGetReq(ctx.getReq());
       } else if (ctx.dynamicVar() != null) {
           iterable = (GetReq) ctx.dynamicVar().accept(this);
       } else if (ctx.VARIABLE(1) != null){

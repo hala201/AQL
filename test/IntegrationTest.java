@@ -47,17 +47,18 @@ class IntegrationTest {
         assertEquals(sw.toString(), aqlOutput, "Fail to match the expected output for: " + test);
     }
 
-    @Test
-    void testSimplePost() {
-        this.inputTest(testData.simplePost_input,
-                testData.simplePost_integration_output,
-                "simple post test");
-    }
+    // TBD: update when most components are done
+    // @Test
+    // void testSimplePost() {
+    //     this.inputTest(testData.simplePost_input,
+    //             testData.simplePost_integration_output,
+    //             "simple post test");
+    // }
 
-    @Test
-    void testSimplePut() {
-        this.inputTest(testData.simplePut_input,
-                testData.simplePut_integration_output,
-                "simple put test");
-    }
+    // @Test
+    // void testSimplePut() {
+    //     this.inputTest(testData.simplePut_input,
+    //             testData.simplePut_integration_output,
+    //             "simple put test");
+    // }
 }

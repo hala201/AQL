@@ -1,80 +1,94 @@
 package controller;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 public class APIService {
-
-    private HttpClient httpClient;
+    private final HttpClient httpClient;
 
     public APIService() {
         this.httpClient = HttpClient.newHttpClient();
     }
 
-    // TODO: make sure to handle only JSON response, and throw appropriate exceptions
-    public Object makeGetRequest(String uri, JSONObject json) throws Exception {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(new URI(uri))
-                .header("Content-Type", "application/json");
-        if (json != null) {
-            requestBuilder.method("GET", HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
-        } else {
-            requestBuilder.GET();
-        }
-        return this.sendRequest(requestBuilder.build());
+    public Object makeGetRequest(String uri, JSONObject params) throws Exception {
+        HttpRequest request = this.buildRequest(uri, "GET", params);
+        return this.sendRequest(request);
     }
 
-    public Object makeDeleteRequest(String uri, JSONObject json) throws Exception {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(new URI(uri))
-                .header("Content-Type", "application/json");
-        if (json != null) {
-            requestBuilder.method("DELETE", HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
-        } else {
-            requestBuilder.DELETE();
-        }
-        return this.sendRequest(requestBuilder.build());
+    public Object makePostRequest(String uri, JSONObject params) throws Exception {
+        HttpRequest request = this.buildRequest(uri, "POST", params);
+        return this.sendRequest(request);
     }
 
-    public Object makePostRequest(String uri, JSONObject json) throws Exception {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(new URI(uri))
-                .header("Content-Type", "application/json");
-        if (json != null) {
-            requestBuilder.POST(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
-        } else {
-            // POST with an empty body
-            requestBuilder.POST(HttpRequest.BodyPublishers.noBody());
-        }
-        return this.sendRequest(requestBuilder.build());
+    public Object makePutRequest(String uri, JSONObject params) throws Exception {
+        HttpRequest request = this.buildRequest(uri, "PUT", params);
+        return this.sendRequest(request);
     }
 
-    public Object makePutRequest(String uri, JSONObject json) throws Exception {
+    public Object makeDeleteRequest(String uri, JSONObject params) throws Exception {
+        HttpRequest request = this.buildRequest(uri, "DELETE", params);
+        return this.sendRequest(request);
+    }
+
+    private HttpRequest buildRequest(String uri, String method, JSONObject params) {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(new URI(uri))
+                .uri(URI.create(uri))
                 .header("Content-Type", "application/json");
-        if (json != null) {
-            requestBuilder.PUT(HttpRequest.BodyPublishers.ofString(json.toString(), StandardCharsets.UTF_8));
+
+        if (params != null && !params.isEmpty()) {
+            String requestBody = params.toString();
+            requestBuilder.method(method, HttpRequest.BodyPublishers.ofString(requestBody));
         } else {
-            // PUT empty body
-            requestBuilder.PUT(HttpRequest.BodyPublishers.noBody());
+            if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) {
+                requestBuilder.method(method, HttpRequest.BodyPublishers.noBody());
+            } else {
+                requestBuilder.method(method, HttpRequest.BodyPublishers.ofString(""));
+            }
         }
-        return this.sendRequest(requestBuilder.build());
+
+        try {
+            return requestBuilder.build();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to build request: " + e.getMessage());
+        }
     }
 
     private Object sendRequest(HttpRequest request) throws Exception {
-        HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
+        try {
+            HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
 
-        JSONTokener tokener = new JSONTokener(response.body());
-        Object result = tokener.nextValue(); // This could be a JSONObject or a JSONArray
-
-        return result;
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                JSONTokener tokener = new JSONTokener(response.body());
+                Object result = tokener.nextValue();
+                if (result instanceof JSONObject || result instanceof JSONArray) {
+                    return result;
+                } else {
+                    throw new RuntimeException("Language only supports Response with a JSON format");
+                }
+            } else {
+                String errorMessage = String.format("Error: HTTP %d - %s", response.statusCode(), response.body());
+                throw new RuntimeException(errorMessage);
+            }
+        } catch (java.net.UnknownHostException e) {
+            throw new RuntimeException("Unknown host - " + e.getMessage());
+        } catch (java.net.MalformedURLException e) {
+            throw new RuntimeException("Malformed URL - " + e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException("I/O error - " + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Request interrupted - " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException((e.getMessage() != null ? e.getMessage() : "Unknown error"));
+        }
     }
+
 }

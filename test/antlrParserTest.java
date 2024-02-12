@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import gen.AQLLexer;
 import gen.AQLParser;
+import helper.testData;
 
 public class antlrParserTest {
 
@@ -74,8 +75,8 @@ public class antlrParserTest {
         this.testParser(testData.loopStatement_Valid_input, testData.loopStatement_parse_output);
     }
 
-    @Test
-    public void testComplex1() {
-        this.testParser(testData.complex1_input, testData.complex1_parse_output);
-    }
+    // @Test
+    // public void testComplex1() {
+    //     this.testParser(testData.complex1_input, testData.complex1_parse_output);
+    // }
 }

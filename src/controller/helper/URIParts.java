@@ -8,14 +8,18 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import gen.AQLParser;
 
 public class URIParts {
-    String head;
-    List<String> body;
-    List<String> tail;
+    private String head;
+    private List<String> body = new ArrayList<String>();
+    private List<String> tail = new ArrayList<String>();
 
-    public URIParts(String head, List<String> body, List<String> tail) {
-          this.head = head;
-          this.body = body;
-          this.tail = tail;
+    public URIParts(AQLParser.DynamicURIContext ctx) {
+        this.head = ctx.URI().getText();
+        for (AQLParser.DynamicVarContext var : ctx.dynamicVar()) {
+            this.body.add(var.getText());
+        }
+        for (TerminalNode uri : ctx.URI_TAIL()) {
+            this.tail.add(uri.getText());
+        }
     }
 
     public String getHead() {
@@ -29,17 +33,5 @@ public class URIParts {
     public List<String> getTail() {
         return this.tail;
     }
-
-    public static URIParts parseAndExtractURI(AQLParser.DynamicURIContext ctx) {
-        String head = ctx.URI().getText();
-        List<String> body = new ArrayList<>();
-        List<String> tail = new ArrayList<>();
-        for (AQLParser.DynamicVarContext var : ctx.dynamicVar()) {
-            body.add(var.getText());
-        }
-        for (TerminalNode uri : ctx.URI_TAIL()) {
-            tail.add(uri.getText());
-        }
-        return new URIParts(head, body, tail);
-  }
+    
 }

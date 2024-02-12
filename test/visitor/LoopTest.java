@@ -1,3 +1,4 @@
+package visitor;
 import ast.Node;
 import ast.Program;
 import ast.Statement;
@@ -6,6 +7,8 @@ import ast.loop.Loop;
 import controller.AQLVisitor;
 import gen.AQLLexer;
 import gen.AQLParser;
+import helper.testData;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
@@ -16,7 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LoopAQLVisitorTest {
+public class LoopTest {
     private AQLVisitor visitor;
 
     @BeforeEach

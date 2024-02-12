@@ -19,22 +19,15 @@ public abstract class BaseReqHandler implements IRequestHandler {
 
     protected abstract Object makeApiCall(String uri, JSONObject params) throws Exception;
 
-    @Override
     public Object handleRequest(IRequest request, PrintWriter out, Map<String, Integer> environment, Map<Integer, JSONObject> memory) throws UnexpectedException {
         String parsedURI = this.buildUri(request, environment, memory);
-        JSONObject json = request.getParams(); // This could be null
-        out.write(parsedURI + "\n");
-        if (json != null) {
-            out.write(" with params: " + json.toString() + "\n");
-        }
+        JSONObject json = request.getParams(); 
         try {
+            System.out.println(parsedURI);
             Object response = this.makeApiCall(parsedURI, json);
-            out.write(response.toString() + "\n");
             return response;
         } catch (Exception e) {
-            out.write("Error during API call: " + e.getMessage() + "\n");
-            e.printStackTrace(out);
-            return null;
+            throw new RuntimeException("API call failed: " + e.getMessage(), e);
         }
     }
 
@@ -44,25 +37,29 @@ public abstract class BaseReqHandler implements IRequestHandler {
         for (int i = 0; i < request.getBody().size(); i++) {
             String variablePlaceholder = request.getBody().get(i);
             // Process for dynamic variables
-            if (variablePlaceholder.startsWith("{") && variablePlaceholder.endsWith("}")) {
-                String trimmedPlaceholder = variablePlaceholder.substring(1, variablePlaceholder.length() - 1);
-                String[] parts = trimmedPlaceholder.split("\\.");
-                if (parts.length == 2) {
-                    String variableName = parts[0];
-                    String propertyName = parts[1];
-                    if (environment.containsKey(variableName)) {
-                        Integer pointer = environment.get(variableName);
-                        if (memory.containsKey(pointer)) {
-                            JSONObject data = memory.get(pointer);
-                            if (data.has(propertyName)) {
-                                String resolvedValue = data.getString(propertyName);
-                                uriBuilder.append(resolvedValue);
-                            }
+            String trimmedPlaceholder = variablePlaceholder.substring(1, variablePlaceholder.length() - 1);
+            String[] parts = trimmedPlaceholder.split("\\.");
+            if (parts.length == 2) {
+                String variableName = parts[0];
+                String propertyName = parts[1];
+                if (environment.containsKey(variableName)) {
+                    Integer pointer = environment.get(variableName);
+                    if (memory.containsKey(pointer)) {
+                        JSONObject data = memory.get(pointer);
+                        if (data.has(propertyName)) {
+                            String resolvedValue = data.getString(propertyName);
+                            uriBuilder.append(resolvedValue);
+                        } else {
+                            throw new RuntimeException("Property `" + propertyName + "` not found for variable `" + variableName + "`");
                         }
+                    } else {
+                        throw new RuntimeException("Variable `" + variableName + "` was not SET properly. Variable is not in memory.");
                     }
+                } else {
+                    throw new RuntimeException("Variable `" + variableName + "` was not SET properly.");
                 }
             } else {
-                throw new UnexpectedException("Unexpected error: Dynamic URI parsed unexpectedly for `" + variablePlaceholder + "`\n") ;
+                throw new RuntimeException("Dynamic variable `" + variablePlaceholder + "` improperly formatted. Chaining like this is not allowed.");
             }
     
             if (i < request.getTail().size()) {

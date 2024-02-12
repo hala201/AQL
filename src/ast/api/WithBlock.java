@@ -1,5 +1,7 @@
 package ast.api;
 
+import org.json.JSONObject;
+
 import ast.Node;
 import controller.AQLVisitorType;
 
@@ -13,6 +15,10 @@ public class WithBlock extends Node {
 
     public Params getParams() {
         return this.params;
+    }
+
+    public JSONObject getReqBody() {
+        return this.params.getContent();
     }
 
     @Override
