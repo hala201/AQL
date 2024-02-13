@@ -11,7 +11,8 @@ import ast.api.Params;
 import ast.api.Request;
 import ast.api.WithBlock;
 import ast.loop.Loop;
-import ast.loop.Variable;
+import ast.condition.Condition;
+import ast.condition.OnElse;
 
 public interface AQLVisitorType<T,U>  {
     U visit (Program p, T t);
@@ -35,4 +36,8 @@ public interface AQLVisitorType<T,U>  {
     U visit(Loop loop, T t);
 
     U visit(Value value, T t);
+
+    U visit(OnElse onElse, T t);
+
+    U visit(Condition condition, T t);
 }

@@ -18,18 +18,21 @@ import ast.api.PostReq;
 import ast.api.PutReq;
 import ast.api.Request;
 import ast.api.WithBlock;
+import ast.condition.Condition;
+import ast.condition.OnElse;
 import ast.handler.DelReqHandler;
 import ast.handler.GetReqHandler;
 import ast.handler.PostReqHandler;
 import ast.handler.PutReqHandler;
 import ast.loop.Loop;
 import ast.loop.Variable;
+import controller.helper.ConditionUtils;
 import controller.helper.LocalScope;
 
 public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     private final Map<String, Integer> environment = new HashMap<>();
-    private final Map<Integer, JSONObject> memory = new HashMap<>();
+    private final Map<Integer, Object> memory = new HashMap<>();
     private int memptr = 0;
     private APIService apiService = new APIService();
     private Stack<Map<String, Integer>> localEnvironmentStack = new Stack<>();
@@ -47,10 +50,9 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         return this.environment;
     }
 
-    public Map<Integer, JSONObject> getMemory() {
+    public Map<Integer, Object> getMemory() {
         return this.memory;
     }
-
 
     // TODO: remove most of out.write(), they are for debugging
     private boolean executionHalted = false;
@@ -86,7 +88,6 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         r.getRequest().accept(this, out);
         return null;
     }
-
 
     // Object here are expected to be either JSONObject or JSONArray
     private Object useHandler(IRequest request, PrintWriter out) {
@@ -175,12 +176,64 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         return null;
     }
 
-
     @Override
     public Object visit(Value v, PrintWriter out) {
         out.print("doing VARIABLE\n");
         v.accept(this, out);
         return null;
+    }
+
+    @Override
+    public Object visit(OnElse oe, PrintWriter out) {
+        out.write("doing ON/ELSE\n");
+        if (oe.getOnBody() == null) {
+            throw new IllegalArgumentException("ON/ELSE: empty on body");
+        }
+        if (oe.getElseBody() == null){
+            throw new IllegalArgumentException("ON/ELSE: empty else body");
+        }
+        if (oe.getCondition() == null) {
+            throw new IllegalArgumentException("ON/ELSE: null condition");
+        }
+
+        Boolean con = (Boolean) oe.getCondition().accept(this, out);
+
+        if (con) {
+            oe.getOnBody().accept(this, out);
+        } else if (oe.getElseBody() != null){
+            oe.getElseBody().accept(this, out);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Boolean visit(Condition condition, PrintWriter out) {
+        out.write("Evaluating CONDITION\n");
+
+        Object leftOperand = ConditionUtils.evaluateOperand(condition.getLeft(), this.environment, this.memory);
+        Object rightOperand = ConditionUtils.evaluateOperand(condition.getRight(), this.environment, this.memory);
+        String operator = condition.getRule();
+
+        return this.compareOperands(leftOperand, rightOperand, operator, out);
+    }
+
+    private Boolean compareOperands(Object left, Object right, String operator, PrintWriter out) {
+        if (left instanceof Integer && right instanceof Integer) {
+            return ConditionUtils.compareInteger((Integer) left, (Integer) right, operator);
+        }
+        else if (left instanceof String && right instanceof String) {
+            return ConditionUtils.compareString((String) left, (String) right, operator);
+        }
+        else if (left instanceof JSONObject && right instanceof JSONObject) {
+            return ConditionUtils.compareJSONObject((JSONObject) left, (JSONObject) right, operator);
+        }
+        else if (left instanceof JSONArray && right instanceof JSONArray) {
+            return ConditionUtils.compareJSONArray((JSONArray) left, (JSONArray) right, operator);
+        }
+        else {
+            throw new IllegalArgumentException("Incompatible operand types for comparison: " + left.getClass() + " and " + right.getClass());
+        }
     }
 
 }

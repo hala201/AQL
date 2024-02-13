@@ -8,10 +8,11 @@ import java.util.function.Function;
 
 import org.json.JSONObject;
 
+import com.sun.jdi.request.InvalidRequestStateException;
+
 import ast.Node;
 import ast.Program;
 import ast.Statement;
-import ast.Value;
 import ast.api.DelReq;
 import ast.api.GetReq;
 import ast.api.Params;
@@ -19,8 +20,11 @@ import ast.api.PostReq;
 import ast.api.PutReq;
 import ast.api.Request;
 import ast.api.WithBlock;
+import ast.condition.Condition;
+import ast.condition.OnElse;
 import ast.loop.Loop;
 import ast.loop.Variable;
+import controller.helper.ConditionUtils;
 import controller.helper.StringParser;
 import controller.helper.URIParts;
 import gen.AQLParser;
@@ -39,11 +43,22 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   
   @Override
   public Statement visitStatement(AQLParser.StatementContext ctx) {
-    if (ctx.request() != null) {
-        return new Statement(this.visitRequest(ctx.request()));
-    } else if (ctx.loop() != null) {
-        return new Statement(this.visitLoop(ctx.loop()));
-    }
+      if (ctx.request() != null) {
+          return new Statement(this.visitRequest(ctx.request()));
+      }
+      if (ctx.loop() != null) {
+          return new Statement(this.visitLoop(ctx.loop()));
+      }
+      if (ctx.log() != null) {
+          return new Statement(this.visitLog(ctx.log()));
+      }
+      if (ctx.set() != null){
+          return new Statement(this.visitSet(ctx.set()));
+      }
+      if (ctx.onElse() != null) {
+          return new Statement(this.visitOnElse(ctx.onElse()));
+      }
+
       throw new IllegalArgumentException("Unsupported statement type");
   }
 
@@ -146,31 +161,64 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
       return new Params(params);
   }
 
-  @Override
+    @Override
     public Loop visitLoop(AQLParser.LoopContext ctx) {
-      Variable loopControlVariable = new Variable(ctx.VARIABLE(0).getText(), new JSONObject());
-      GetReq iterable = null;
-      if (ctx.getReq() != null) {
-          iterable = this.visitGetReq(ctx.getReq());
-      } else if (ctx.dynamicVar() != null) {
-          iterable = (GetReq) ctx.dynamicVar().accept(this);
-      } else if (ctx.VARIABLE(1) != null){
-        iterable = (GetReq) ctx.VARIABLE(1).accept(this);
+        Variable loopControlVariable = new Variable(ctx.VARIABLE(0).getText(), new JSONObject());
+        GetReq iterable = null;
+        if (ctx.getReq() != null) {
+            iterable = this.visitGetReq(ctx.getReq());
+        } else if (ctx.dynamicVar() != null) {
+            iterable = (GetReq) ctx.dynamicVar().accept(this);
+        } else if (ctx.VARIABLE(1) != null){
+            iterable = (GetReq) ctx.VARIABLE(1).accept(this);
+        }
+        // TODO: To be uncommented once SET is ready
+        // if (iterable == null) throw new IllegalArgumentException("FOR EACH: Iterable is Null or undefined");
+        List<Statement> statements = new ArrayList<>();
+        for (AQLParser.StatementContext sCtx : ctx.statement()) {
+            Statement statement = (Statement) sCtx.accept(this);
+            statements.add(statement);
+        }
+        Program loopBody = new Program(statements);
+        return new Loop(iterable, loopControlVariable, loopBody);
+    }
+    
+
+  @Override
+  public OnElse visitOnElse(AQLParser.OnElseContext ctx) {
+
+      Condition condition = this.visitCondition(ctx.condition());
+      Program onBody = this.visitProgram(ctx.program(0));
+      if (onBody.getTasks().isEmpty()) {
+          throw new InvalidRequestStateException("Empty ON body");
       }
-      // TODO: To be uncommented once SET is ready
-      // if (iterable == null) throw new IllegalArgumentException("FOR EACH: Iterable is Null or undefined");
-      List<Statement> statements = new ArrayList<>();
-      for (AQLParser.StatementContext sCtx : ctx.statement()) {
-          Statement statement = (Statement) sCtx.accept(this);
-          statements.add(statement);
+
+      Program elseBody = null;
+      if (ctx.ELSE() != null) {
+          elseBody = this.visitProgram(ctx.program(1));
+          if (elseBody.getTasks().isEmpty()) {
+              throw new InvalidRequestStateException("Empty ELSE body");
+          }
       }
-      Program loopBody = new Program(statements);
-      return new Loop(iterable, loopControlVariable, loopBody);
+
+      return new OnElse(condition, onBody, elseBody);
   }
 
-  //   @Override
-  //   public Value visitValue(AQLParser.ValueContext ctx) {
-  //     return new Variable(ctx.VARIABLE().getText(), new JSONObject());
-  // }
+    @Override
+    public Condition visitCondition(AQLParser.ConditionContext ctx) {
+        if (ctx.getChildCount() != 3) {
+            throw new InvalidRequestStateException("Invalid condition format. " + ctx.getText());
+        }
+        
+        Object leftOperand = ConditionUtils.evaluateOperand(ctx.getChild(0), this);
+        String operator = ctx.getChild(1).getText();
+        Object rightOperand = ConditionUtils.evaluateOperand(ctx.getChild(2), this);
 
+        if (leftOperand == null || !ConditionUtils.isValidOperator(operator) || rightOperand == null) {
+            throw new IllegalArgumentException("Invalid Conditional Statement at: " + ctx.getText());
+        }
+        
+        return new Condition(leftOperand, operator, rightOperand);
+    }
+    
 }

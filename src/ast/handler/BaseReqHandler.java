@@ -19,7 +19,7 @@ public abstract class BaseReqHandler implements IRequestHandler {
 
     protected abstract Object makeApiCall(String uri, JSONObject params) throws Exception;
 
-    public Object handleRequest(IRequest request, PrintWriter out, Map<String, Integer> environment, Map<Integer, JSONObject> memory) throws UnexpectedException {
+    public Object handleRequest(IRequest request, PrintWriter out, Map<String, Integer> environment, Map<Integer, Object> memory) throws UnexpectedException {
         String parsedURI = this.buildUri(request, environment, memory);
         JSONObject json = request.getParams(); 
         try {
@@ -31,7 +31,7 @@ public abstract class BaseReqHandler implements IRequestHandler {
         }
     }
 
-    private String buildUri(IRequest request, Map<String, Integer> environment, Map<Integer, JSONObject> memory) throws UnexpectedException {
+    private String buildUri(IRequest request, Map<String, Integer> environment, Map<Integer, Object> memory) throws UnexpectedException {
         StringBuilder uriBuilder = new StringBuilder(request.getHead());
     
         for (int i = 0; i < request.getBody().size(); i++) {
@@ -45,7 +45,7 @@ public abstract class BaseReqHandler implements IRequestHandler {
                 if (environment.containsKey(variableName)) {
                     Integer pointer = environment.get(variableName);
                     if (memory.containsKey(pointer)) {
-                        JSONObject data = memory.get(pointer);
+                        JSONObject data = (JSONObject) memory.get(pointer);
                         if (data.has(propertyName)) {
                             String resolvedValue = data.getString(propertyName);
                             uriBuilder.append(resolvedValue);

@@ -25,8 +25,8 @@ public class testData {
     public static String simpleDelete_parse_output = "(program (statement (request (delReq DELETE (dynamicURI https://api.example.com/data)))))";
 
     public static String withBlock_input = """
-        GET https://api.example.com/data WITH { "param1": value1, "param2": 'value2' }
-                """;
+            GET https://api.example.com/data WITH { "param1": value1, "param2": 'value2' }
+                    """;
     public static String withBlock_parse_output = "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data) (withBlock WITH { (params (param (string \"param1\") : (value value1)) , (param (string \"param2\") : (string 'value2'))) })))))";
 
     public static String onElseCondition_input = "GET https://api.example.com/data ON variable1 == variable2 { LOG variable1 } ELSE { LOG 'Error' }";
@@ -56,26 +56,45 @@ public class testData {
     public static String loopStatement_Invalid_NonIterable_input = "FOR EACH user IN POST https://api.example.com/users { LOG user.name}";
 
     public static String complex1_input = """
-        FOR EACH user IN GET https://api.com/users {
-            LOG user.name
-            SET GET https://api.com/users/{user.id}/tasks AS TaskList
-            SET 'failed' AS failMsg
-        
-            FOR EACH task IN TaskList {
-                PUT https://api.com/tasks/{task.id} WITH { "status": 'completed' }
-        
-                POST https://api.com/send WITH {
-                    "userId": user.id,
-                    "message": 'Task {task.id} completed'
-                }
-        
-                ON task.sth==false {
-                    DELETE https://api.com/tasks/{task.id}
-                } ELSE {
-                    LOG failMsg
+            FOR EACH user IN GET https://api.com/users {
+                LOG user.name
+                SET GET https://api.com/users/{user.id}/tasks AS TaskList
+                SET 'failed' AS failMsg
+
+                FOR EACH task IN TaskList {
+                    PUT https://api.com/tasks/{task.id} WITH { "status": 'completed' }
+
+                    POST https://api.com/send WITH {
+                        "userId": user.id,
+                        "message": 'Task {task.id} completed'
+                    }
+
+                    ON task.sth==false {
+                        DELETE https://api.com/tasks/{task.id}
+                    } ELSE {
+                        LOG failMsg
+                    }
                 }
             }
-        }
-                """;
+                    """;
     public static String complex1_parse_output = "(program (statement (loop FOR EACH user IN (request (getReq GET (dynamicURI https://api.com/users))) { (statement (log LOG (value (dynamicVar user . name)))) (statement (set SET (request (getReq GET (dynamicURI https://api.com/users/ (dynamicVar { user . id }) /tasks))) AS TaskList)) (statement (set SET (string 'failed') AS failMsg)) (statement (loop FOR EACH task IN TaskList { (statement (request (putReq PUT (dynamicURI https://api.com/tasks/ (dynamicVar { task . id })) (withBlock WITH { (params (param (string \"status\") : (string 'completed'))) })))) (statement (request (postReq POST (dynamicURI https://api.com/send) (withBlock WITH { (params (param (string \"userId\") : (value (dynamicVar user . id))) , (param (string \"message\") : (string 'Task {task.id} completed'))) }) (onElse ON (condition (value (dynamicVar task . sth)) == (value false)) { (statement (request (delReq DELETE (dynamicURI https://api.com/tasks/ (dynamicVar { task . id }))))) } ELSE { (statement (log LOG (value failMsg))) })))) })) })))";
+
+    public static String getOnElseCondition_valid_input1 = "ON 2 == 2 { LOG 'SUCCESS' } ELSE { LOG 'FAILED' }";
+    public static String getOnElseCondition_valid_input2 = "ON 2 == 2 { LOG 'SUCCESS' }";
+    
+    public static String getOnElseCondition_Empty_On_number_input = "ON 2 == 2 { } ELSE { LOG 'FAILED' }";
+
+    public static String getOnElseCondition_Empty_Else_number_input = "ON 2 == 2 { LOG 'SUCCESS' } ELSE {  }";
+    public static String getOnElseCondition_Invalid_rule_number_input = "ON 2 * 2 { LOG 'SUCCESS' } ELSE { LOG 'FAILED' }";
+
+    public static String getOnElseCondition_No_condition_number_input = "ON 2 2 { LOG 'SUCCESS' } ELSE { LOG 'FAILED' }";
+
+    public static String getCondition_valid_string_input = "'string' == 'string'";
+    public static String getCondition_valid_number_input = "2 == 2";
+    public static String getCondition_valid1_parse_output = "(program 2 == 2)";
+    public static String getCondition_valid_input3_2VAR = "A == B";
+    public static String getCondition_valid_input4_2DVAR = "dA.id == dB.name";
+    public static String getCondition_valid_input5_VARandDVAR = "A == dB.name";
+    public static String getCondition_valid_input6_VARandVAL = "A == 'bob'";
+
 }

@@ -3,12 +3,7 @@ package ast.loop;
 import ast.Node;
 import ast.Program;
 import ast.api.GetReq;
-import ast.api.Params;
-import ast.api.Request;
 import controller.AQLVisitorType;
-
-import javax.sound.sampled.Port;
-import java.util.List;
 
 public class Loop extends Node {
     private GetReq iterableResponse;
@@ -22,27 +17,24 @@ public class Loop extends Node {
         this.loopBody = loopBody;
     }
     public Variable getLoopControlVariable() {
-        return loopControlVariable;
+        return this.loopControlVariable;
     }
 
     public GetReq getIterable() {
-        return iterableResponse;
+        return this.iterableResponse;
     }
 
     public void setIterable(GetReq getReq) {
-        iterableResponse = getReq;
+        this.iterableResponse = getReq;
     }
 
     public Program getLoopBody() {
-        return loopBody;
+        return this.loopBody;
     }
 
     public void setLoopBody(Program program) {
-        loopBody = program;
+        this.loopBody = program;
     }
-
-
-
 
     @Override
     public <T, U> U accept(AQLVisitorType<T, U> v, T t) {

@@ -29,7 +29,6 @@ QUOTEDOUBLE     : '"' (~["\r\n])* '"'; // matches any character except double qu
 QUOTESINGLE     : '\'' (~['\r\n])* '\''; // matches any character except single quote and newlines
 URI             : 'https://' ~[{}[\]\r\n\t ]+;
 URI_TAIL        : '/' ~[{}[\]\r\n\t ]+; // only acceptable if connected by URI + {...}
-VARIABLE        : [a-zA-Z_][a-zA-Z_0-9]* ;
-ALPHANUM        : [a-zA-Z0-9_];
+VARIABLE        : [a-zA-Z_][a-zA-Z_0-9]*;
 NUMBER          : '-'? [0-9]+ ('.' [0-9]+)?;
 WS              : [ \t\r\n]+ -> skip;
