@@ -6,7 +6,7 @@ program         : statement+ ;
 statement       : request | loop | log | set | onElse;
 loop            : FOR_EACH VARIABLE IN (getReq | dynamicVar | VARIABLE) OPEN_BRACE statement+ CLOSE_BRACE ;
 set             : SET (request | value | string) AS VARIABLE ;
-log             : LOG (value | string) ;
+log             : LOG (value | dynamicVar | VARIABLE);
 onElse          : ON condition OPEN_BRACE statement+ CLOSE_BRACE (ELSE OPEN_BRACE statement+ CLOSE_BRACE)? ;
 withBlock       : WITH OPEN_BRACE params CLOSE_BRACE ;
 
@@ -24,4 +24,4 @@ dynamicURI      : URI (dynamicVar URI_TAIL*)* ;
 // allow both {data.value} and data.value
 dynamicVar      : VARIABLE DOT VARIABLE | OPEN_BRACE VARIABLE DOT VARIABLE CLOSE_BRACE;
 string          : QUOTEDOUBLE | QUOTESINGLE;
-value           : NUMBER | dynamicVar | VARIABLE ;
+value           : NUMBER | string;

@@ -168,9 +168,9 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
       return new Loop(iterable, loopControlVariable, loopBody);
   }
 
-    @Override
-    public Value visitValue(AQLParser.ValueContext ctx) {
-      return new Variable(ctx.VARIABLE().getText(), new JSONObject());
-  }
+  //   @Override
+  //   public Value visitValue(AQLParser.ValueContext ctx) {
+  //     return new Variable(ctx.VARIABLE().getText(), new JSONObject());
+  // }
 
 }
