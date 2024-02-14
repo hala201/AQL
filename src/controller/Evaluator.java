@@ -96,11 +96,11 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
             try {
                 return handler.handleRequest(request, out, this.environment, this.memory);
             } catch (Exception e) {
-                out.write("Request Error: " + e.getMessage());
+                out.write("Request Error: " + e.getMessage() + "\n");
                 throw new RuntimeException("Request Error: " + e.getMessage());
             }
         }
-        out.write("Unexpected Error: API handler couldn't recognize request type");
+        out.write("Unexpected Error: API handler couldn't recognize request type.\n");
         throw new RuntimeException("Unexpected Error: API handler couldn't recognize request type");
     }
     
@@ -138,7 +138,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     }
 
     @Override
-    public Object visit(Loop loop, PrintWriter out) {
+    public Void visit(Loop loop, PrintWriter out) {
         out.write("doing FOR EACH\n");
         LocalScope.pushScope(this.localEnvironmentStack, this.environment);
         Variable loopControlVariable = loop.getLoopControlVariable();
@@ -184,24 +184,31 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     }
 
     @Override
-    public Object visit(OnElse oe, PrintWriter out) {
+    public Void visit(OnElse oe, PrintWriter out) {
         out.write("doing ON/ELSE\n");
         if (oe.getOnBody() == null) {
+            out.write("ON/ELSE Error: empty ON body\n");
             throw new IllegalArgumentException("ON/ELSE: empty on body");
         }
         if (oe.getElseBody() == null){
+            out.write("ON/ELSE Error: empty ELSE body\n");
             throw new IllegalArgumentException("ON/ELSE: empty else body");
         }
         if (oe.getCondition() == null) {
+            out.write("ON/ELSE Error: missing condition\n");
             throw new IllegalArgumentException("ON/ELSE: null condition");
         }
 
-        Boolean con = (Boolean) oe.getCondition().accept(this, out);
-
-        if (con) {
-            oe.getOnBody().accept(this, out);
-        } else if (oe.getElseBody() != null){
-            oe.getElseBody().accept(this, out);
+        try {
+            Boolean con = (Boolean) oe.getCondition().accept(this, out);
+            if (con) {
+                oe.getOnBody().accept(this, out);
+            } else {
+                oe.getElseBody().accept(this, out);
+            }
+        } catch (Exception e) {
+            out.write("Condition Error: " + e.getMessage() + "\n");
+            throw new IllegalArgumentException("Condition Error: " + e.getMessage());
         }
 
         return null;
