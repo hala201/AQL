@@ -34,7 +34,7 @@ public class ConditionUtils {
 
     public static Object getValue(AQLParser.ValueContext ctx) {
         if (ctx.NUMBER() != null) {
-            return Integer.parseInt(ctx.NUMBER().getText());
+            return Double.parseDouble(ctx.NUMBER().getText());
         } else if (ctx.string() != null) {
             return ctx.string().getText().replaceAll("^\"|\"$", "");
         }
@@ -71,7 +71,9 @@ public class ConditionUtils {
             }
         } else if (operand instanceof Variable) {
             return getVarValue(((Variable) operand).getVariableName(), environment, memory);
-        } else if (operand instanceof Integer || operand instanceof JSONArray || operand instanceof JSONObject) {
+        } else if (operand instanceof Number ||
+                operand instanceof JSONArray ||
+                operand instanceof JSONObject) {
             return operand;
         }
 
@@ -118,15 +120,15 @@ public class ConditionUtils {
         }
     }
 
-    public static Boolean compareInteger(Integer left, Integer right, String operator) {
+    public static Boolean compareNumber(Number left, Number right, String operator) {
         switch (operator) {
             case "==": return left.equals(right);
             case "!=": return !left.equals(right);
-            case "<": return left < right;
-            case "<=": return left <= right;
-            case ">": return left > right;
-            case ">=": return left >= right;
-            default: throw new IllegalArgumentException("Unsupported operator for integer comparison: " + operator);
+            case "<": return left.doubleValue() < right.doubleValue();
+            case "<=": return left.doubleValue() <= right.doubleValue();
+            case ">": return left.doubleValue() > right.doubleValue();
+            case ">=": return left.doubleValue() >= right.doubleValue();
+            default: throw new IllegalArgumentException("Unsupported operator for number comparison: " + operator);
         }
     }
 

@@ -16,7 +16,7 @@ postReq         : POST      dynamicURI withBlock? (onElse)? ;
 putReq          : PUT       dynamicURI withBlock? (onElse)? ;
 delReq          : DELETE    dynamicURI withBlock? (onElse)? ;
 
-condition       : (value | dynamicVar | VARIABLE) (EQUAL | NOT_EQUAL | LESS | GREATER | LESS_EQUAL | GREATER_EQUAL | ERROR | SUCCESS) (value | dynamicVar | VARIABLE) ;
+condition       : (value | dynamicVar | VARIABLE) (EQUAL | NOT_EQUAL | LESS | GREATER | LESS_EQUAL | GREATER_EQUAL) (value | dynamicVar | VARIABLE) ;
 params          : param (COMMA param)* ;
 // NOTE: assuming we only allow JSON within WITH block
 param           : string COLON (value | string) ;

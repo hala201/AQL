@@ -268,10 +268,6 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
             out.write("ON/ELSE Error: empty ON body\n");
             throw new IllegalArgumentException("ON/ELSE: empty on body");
         }
-        if (oe.getElseBody() == null){
-            out.write("ON/ELSE Error: empty ELSE body\n");
-            throw new IllegalArgumentException("ON/ELSE: empty else body");
-        }
         if (oe.getCondition() == null) {
             out.write("ON/ELSE Error: missing condition\n");
             throw new IllegalArgumentException("ON/ELSE: null condition");
@@ -308,8 +304,8 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     }
 
     private Boolean compareOperands(Object left, Object right, String operator, PrintWriter out) {
-        if (left instanceof Integer && right instanceof Integer) {
-            return ConditionUtils.compareInteger((Integer) left, (Integer) right, operator);
+        if (left instanceof Number && right instanceof Number) {
+            return ConditionUtils.compareNumber((Number) left, (Number) right, operator);
         }
         else if (left instanceof String && right instanceof String) {
             return ConditionUtils.compareString((String) left, (String) right, operator);

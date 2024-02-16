@@ -60,7 +60,7 @@ class OnElseUnitConditionTest {
 
     @Test
     void testBasicConditionNumber() {
-        this.con = new Condition(2, "==", 2);
+        this.con = new Condition(2.0, "==", 2.0);
         Object result = this.evaluator.visit(this.con, this.out);
 
         assertTrue((boolean) result);
@@ -68,7 +68,7 @@ class OnElseUnitConditionTest {
 
     @Test
     void testBasicConditionNumber2() {
-        this.con = new Condition(3, "==", 2);
+        this.con = new Condition(3.0, "==", 2.0);
         Object result = this.evaluator.visit(this.con, this.out);
 
         assertFalse((boolean) result);
@@ -152,9 +152,9 @@ class OnElseUnitConditionTest {
     @Test
     void testBasicConditionJSONIDNumber() {
         JSONObject obj1 = new JSONObject();
-        obj1.put("id", 2);
+        obj1.put("id", 2.0);
 
-        this.con = new Condition(obj1.get("id"), ">", 1);
+        this.con = new Condition(obj1.get("id"), ">", 1.0);
         Object result = this.evaluator.visit(this.con, this.out);
 
         assertTrue((boolean) result);
@@ -227,9 +227,9 @@ class OnElseUnitConditionTest {
     @Test
     void testConditionVarAndVal() {
         this.evaluator.getEnvironment().put("age", 1000);
-        this.evaluator.getMemory().put(1000, 30);
+        this.evaluator.getMemory().put(1000, 30.0);
 
-        int literalValue = 30;
+        Double literalValue = 30.0;
 
         Condition condition = new Condition(new Variable("age", null), "==", literalValue);
 
@@ -240,9 +240,9 @@ class OnElseUnitConditionTest {
     @Test
     void testConditionVarAndVal2() {
         this.evaluator.getEnvironment().put("age", 1000);
-        this.evaluator.getMemory().put(1000, 31);
+        this.evaluator.getMemory().put(1000, 31.0);
 
-        int literalValue = 30;
+        Double literalValue = 30.0;
 
         Condition condition = new Condition(new Variable("age", null), "==", literalValue);
 
