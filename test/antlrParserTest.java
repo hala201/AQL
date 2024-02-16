@@ -1,6 +1,5 @@
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,7 @@ public class antlrParserTest {
         AQLParser parser = new AQLParser(tokens);
         return parser.program();
     }
-    
+
     // TBD: update failing tests due to changes in grammar
     @Test
     public void testSimpleLog() {
@@ -66,17 +65,47 @@ public class antlrParserTest {
     }
 
     @Test
+    public void testLoopStatement() {
+        this.testParser(testData.loopStatement_Valid_input, testData.loopStatement_parse_output);
+    }
+
+//     @Test
+//     public void testComplex1() {
+//         this.testParser(testData.complex1_input, testData.complex1_parse_output);
+//     }
+
+    @Test
+    public void testNumberLog() {
+        this.testParser(testData.numberLog_input, testData.numberLog_parse_output);
+    }
+    @Test
+    public void testLogDynamicVarString() {
+        this.testParser(testData.LogWithDynamicVar_inputString, testData.LogWithDynamicVar_parse_outputString);
+    }
+
+    @Test
+    public void testLogDynamicVarNumber() {
+        this.testParser(testData.LogWithDynamicVar_inputNumber, testData.LogWithDynamicVar_parse_outputNumber);
+    }
+
+    @Test
     public void testSetStatement() {
         this.testParser(testData.setStatement_input, testData.setStatement_parse_output);
     }
 
     @Test
-    public void testLoopStatement() {
-        this.testParser(testData.loopStatement_Valid_input, testData.loopStatement_parse_output);
+    public void testSetValue(){
+        this.testParser(testData.SetWithString_input, testData.SetWithString_parse_output);
     }
 
-    // @Test
-    // public void testComplex1() {
-    //     this.testParser(testData.complex1_input, testData.complex1_parse_output);
-    // }
+    @Test
+    public void testSetValueNumber(){
+        this.testParser(testData.SetWithNumber_input, testData.SetWithNumber_parse_output);
+    }
+
+    @Test
+    public void testSetReq(){
+        this.testParser(testData.SetWithGetReq_input, testData.SetWithGetReq_parse_output);
+    }
+
 }

@@ -2,10 +2,34 @@ package helper;
 public class testData {
     public static String simpleLog_input = "LOG 'Hello World'";
     public static String simpleLog_parse_output = "(program (statement (log LOG (string 'Hello World'))))";
-
     public static String LogWithVariable_input = "LOG variableName";
     public static String LogWithVariable_parse_output = "(program (statement (log LOG (value variableName))))";
+    public static String numberLog_input = "LOG 123";
+    public static String numberLog_parse_output = "(program (statement (log LOG (value 123))))";
+    public static String LogWithDynamicVar_inputString = "LOG SimpleClass.a";
+    public static String LogWithDynamicVar_parse_outputString = "(program (statement (log LOG (dynamicVar SimpleClass . a))))";
+    public static String LogWithDynamicVar_inputNumber = "LOG SimpleClass.b";
+    public static String LogWithDynamicVar_parse_outputNumber = "(program (statement (log LOG (dynamicVar SimpleClass . b))))";
+    public static String SetWithString_input = "SET 'Hello World' AS myVar";
+    public static String SetWithString_parse_output = "(program (statement (set SET (value (string 'Hello World')) AS myVar)))";
+    public static String SetWithNumber_input = "SET 123 AS myVar";
+    public static String SetWithNumber_parse_output = "(program (statement (set SET (value 123) AS myVar)))";
+    public static String SetWithGetReq_input = "SET GET https://api.example.com/users AS students";
+    public static String SetWithGetReq_parse_output = "(program (statement (set SET (request (getReq GET (dynamicURI https://api.example.com/users))) AS students)))";
+    public static class SimpleClass {
 
+        private static String a = "hello";
+
+        private static int b = 1;
+
+        public static String getA() {
+            return a;
+        }
+
+        public static int getB() {
+            return b;
+        }
+    }
     public static String simpleGet_input = "GET https://api.example.com/data";
     public static String simpleGet_parse_output = "(program (statement (request (getReq GET (dynamicURI https://api.example.com/data)))))";
 
@@ -77,7 +101,7 @@ public class testData {
                 }
             }
                     """;
-    public static String complex1_parse_output = "(program (statement (loop FOR EACH user IN (request (getReq GET (dynamicURI https://api.com/users))) { (statement (log LOG (value (dynamicVar user . name)))) (statement (set SET (request (getReq GET (dynamicURI https://api.com/users/ (dynamicVar { user . id }) /tasks))) AS TaskList)) (statement (set SET (string 'failed') AS failMsg)) (statement (loop FOR EACH task IN TaskList { (statement (request (putReq PUT (dynamicURI https://api.com/tasks/ (dynamicVar { task . id })) (withBlock WITH { (params (param (string \"status\") : (string 'completed'))) })))) (statement (request (postReq POST (dynamicURI https://api.com/send) (withBlock WITH { (params (param (string \"userId\") : (value (dynamicVar user . id))) , (param (string \"message\") : (string 'Task {task.id} completed'))) }) (onElse ON (condition (value (dynamicVar task . sth)) == (value false)) { (statement (request (delReq DELETE (dynamicURI https://api.com/tasks/ (dynamicVar { task . id }))))) } ELSE { (statement (log LOG (value failMsg))) })))) })) })))";
+    public static String complex1_parse_output = "(program (statement (loop FOR EACH user IN (getReq GET (dynamicURI https://api.com/users)) { (statement (log LOG (dynamicVar user . name))) (statement (set SET (request (getReq GET (dynamicURI https://api.com/users/ (dynamicVar { user . id }) /tasks))) AS TaskList)) (statement (set SET (value (string 'failed')) AS failMsg)) (statement (loop FOR EACH task IN TaskList { (statement (request (putReq PUT (dynamicURI https://api.com/tasks/ (dynamicVar { task . id })) (withBlock WITH { (params (param (string \"status\") : (value (string 'completed')))) })))) (statement (request (postReq POST (dynamicURI https://api.com/send) (withBlock WITH { (params (param (string \"userId\") : user . id) , (param (string \"message\") : (value (string 'Task {task.id} completed')))) }) (onElse ON (condition (dynamicVar task . sth) == false) { (program (statement (request (delReq DELETE (dynamicURI https://api.com/tasks/ (dynamicVar { task . id })))))) } ELSE { (program (statement (log LOG failMsg))) })))) })) })))";
 
     public static String getOnElseCondition_valid_input1 = "ON 2 == 2 { LOG 'SUCCESS' } ELSE { LOG 'FAILED' }";
     public static String getOnElseCondition_valid_input2 = "ON 2 == 2 { LOG 'SUCCESS' }";

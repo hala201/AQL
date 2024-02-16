@@ -1,11 +1,14 @@
 package controller;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import ast.logic.Log;
+import ast.logic.Set;
 import org.json.JSONObject;
 
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -31,6 +34,7 @@ import gen.AQLParser;
 import gen.AQLParserBaseVisitor;
 
 public class AQLVisitor extends AQLParserBaseVisitor<Node> {
+    private Map<String, Object> environment = new HashMap<>();
 
   @Override
   public Program visitProgram(AQLParser.ProgramContext ctx) {
@@ -219,6 +223,88 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
         }
         
         return new Condition(leftOperand, operator, rightOperand);
+    }
+
+    @Override
+    public Node visitLog(AQLParser.LogContext ctx) {
+        if(ctx.getChildCount() != 2) {
+            throw new IllegalArgumentException("Invalid log statement");
+        }
+        String message;
+        if (ctx.VARIABLE() != null) {
+            String variableName = ctx.VARIABLE().getText();
+            Object value = environment.get(variableName);
+            message = value != null ? value.toString() : "undefined";
+        } else if (ctx.dynamicVar() != null) {
+            message = getDynamicVar(ctx.dynamicVar());
+        } else if (ctx.value() != null) {
+            message = ctx.value().getText();
+        } else {
+            message = "Error in log statement";
+        }
+
+        return new Log(message);
+    }
+    @Override
+    public Node visitSet(AQLParser.SetContext ctx) {
+        String variableName = ctx.VARIABLE().getText();
+        Object value = null;
+        if (ctx.request() != null) {
+            if(ctx.request().getReq().getText().startsWith("GET")) {
+                GetReq getReq = visitGetReq(ctx.request().getReq());
+                value = getReq;
+            } else if(ctx.request().delReq() != null) {
+                DelReq delReq = visitDelReq(ctx.request().delReq());
+                value = delReq;
+            } else if(ctx.request().putReq() != null) {
+                PutReq putReq = visitPutReq(ctx.request().putReq());
+                value = putReq;
+            } else if(ctx.request().postReq() != null) {
+                PostReq postReq = visitPostReq(ctx.request().postReq());
+                value = postReq;
+            }
+            System.out.println(value);
+        } else if (ctx.value() != null) {
+            System.out.println("Value: " + ctx.value().getText());
+            value = ctx.value().getText();
+        } else {
+            throw new IllegalArgumentException("Error in set statement");
+        }
+        environment.put(variableName, value);
+        if(value instanceof IRequest) {
+            return new Set((IRequest) value, variableName);
+        } else if (value instanceof String) {
+            return new Set((String) value, variableName);
+        } else if (value instanceof Integer) {
+            return new Set((Integer) value, variableName);
+        }
+        throw new IllegalArgumentException("Error in set statement");
+    }
+
+    public String getDynamicVar(AQLParser.DynamicVarContext ctx) {
+        StringBuilder fullDynamicVar = new StringBuilder();
+        if (ctx.VARIABLE().size() == 2) {
+            String objectName = ctx.VARIABLE(0).getText();
+            String propertyName = ctx.VARIABLE(1).getText();
+
+            fullDynamicVar.append(objectName).append(".").append(propertyName);
+        }
+
+        if (ctx.getText().startsWith("{") && ctx.getText().endsWith("}")) {
+            return "{" + fullDynamicVar.toString() + "}";
+        } else {
+            return fullDynamicVar.toString();
+        }
+    }
+
+    private String getValue(AQLParser.ValueContext ctx) {
+        if (ctx.NUMBER() != null) {
+            return ctx.NUMBER().getText();
+        } else if (ctx.string() != null) {
+            String str = ctx.string().getText();
+            return str.substring(1, str.length() - 1);
+        }
+        return "";
     }
     
 }

@@ -10,6 +10,8 @@ import ast.api.PostReq;
 import ast.api.Params;
 import ast.api.Request;
 import ast.api.WithBlock;
+import ast.logic.Log;
+import ast.logic.Set;
 import ast.loop.Loop;
 import ast.condition.Condition;
 import ast.condition.OnElse;
@@ -40,4 +42,8 @@ public interface AQLVisitorType<T,U>  {
     U visit(OnElse onElse, T t);
 
     U visit(Condition condition, T t);
+
+    U visit(Log l, T t);
+
+    U visit(Set set, T t);
 }

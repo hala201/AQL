@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import ast.logic.Log;
+import ast.logic.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -135,6 +137,82 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     public Void visit(Params p, PrintWriter out) {
         out.write("doing PARAMS ");
         return null;
+    }
+
+    @Override
+    public Object visit(Log l, PrintWriter out) {
+        out.print("doing LOG ");
+        String message = l.getMessage();
+        out.print(message);
+        return message;
+    }
+
+    @Override
+    public Object visit(Set s, PrintWriter out) {
+        if (s == null) {
+            throw new NullPointerException("The passed Set object is null.");
+        }
+        if (s.getVariableName() == null) {
+            throw new IllegalArgumentException("SET: variable name is null");
+        }
+        out.write("doing SET ");
+        int currentMemPtr = this.memptr;
+        boolean success = false;
+        try {
+            if (s.getRequest() != null) {
+                Object response = null;
+                out.write("with request ");
+                if (s.getRequest() instanceof GetReq) {
+                    response = ((GetReq) s.getRequest()).accept(this, out);
+                    this.environment.put(s.getVariableName(), currentMemPtr);
+                    this.memory.put(currentMemPtr, response);
+                    this.memptr++;
+                    success = true;
+                    return response;
+                } else if (s.getRequest() instanceof DelReq) {
+                    response = ((DelReq) s.getRequest()).accept(this, out);
+                    this.environment.put(s.getVariableName(), currentMemPtr);
+                    this.memory.put(currentMemPtr, response);
+                    this.memptr++;
+                    success = true;
+                    return response;
+                } else if (s.getRequest() instanceof PutReq) {
+                    response = ((PutReq) s.getRequest()).accept(this, out);
+                    this.environment.put(s.getVariableName(), currentMemPtr);
+                    this.memory.put(currentMemPtr, response);
+                    this.memptr++;
+                    success = true;
+                    return response;
+                } else if (s.getRequest() instanceof PostReq) {
+                    response = ((PostReq) s.getRequest()).accept(this, out);
+                    this.environment.put(s.getVariableName(), currentMemPtr);
+                    this.memory.put(currentMemPtr, response);
+                    this.memptr++;
+                    success = true;
+                    return response;
+                }
+            } else if(s.getRightValue() != null){
+                out.write("with value ");
+                Object value = s.getRightValue();
+                out.write(value.toString());
+                this.environment.put(s.getVariableName(), currentMemPtr);
+                this.memory.put(currentMemPtr, value);
+                this.memptr++;
+                success = true;
+                return value;
+            }
+            throw new IllegalArgumentException("SET: unexpected request type");
+        } catch (Exception e) {
+            this.environment.remove(s.getVariableName());
+            this.memory.remove(currentMemPtr);
+            this.memptr = currentMemPtr;
+            out.write("Error: " + e.getMessage());
+            throw e;
+        } finally {
+            if (!success) {
+                this.memptr = currentMemPtr;
+            }
+        }
     }
 
     @Override
