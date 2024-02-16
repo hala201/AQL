@@ -280,9 +280,13 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         try {
             Boolean con = (Boolean) oe.getCondition().accept(this, out);
             if (con) {
+                LocalScope.pushScope(this.localEnvironmentStack, this.environment);
                 oe.getOnBody().accept(this, out);
+                LocalScope.popScope(this.localEnvironmentStack);
             } else {
+                LocalScope.pushScope(this.localEnvironmentStack, this.environment);
                 oe.getElseBody().accept(this, out);
+                LocalScope.popScope(this.localEnvironmentStack);
             }
         } catch (Exception e) {
             out.write("Condition Error: " + e.getMessage() + "\n");
