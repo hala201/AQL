@@ -2,8 +2,6 @@ package ast.api;
 
 import java.util.List;
 
-import org.json.JSONObject;
-
 import ast.Node;
 import controller.AQLVisitorType;
 import controller.IRequest;
@@ -12,13 +10,13 @@ public class DelReq extends Node implements IRequest {
     private String head;
     private List<String> body;
     private List<String> tail;
-    private JSONObject params;
+    private Params params;
 
-    public DelReq(String head, List<String> body, List<String> tail, JSONObject params) {
+    public DelReq(String head, List<String> body, List<String> tail, Params params2) {
         this.head = head;
         this.body = body;
         this.tail = tail;
-        this.params = params;
+        this.params = params2;
     }
 
     public String getHead() {
@@ -33,7 +31,7 @@ public class DelReq extends Node implements IRequest {
         return this.tail;
     }
 
-    public JSONObject getParams() {
+    public Params getParams() {
         return this.params;
     }
 

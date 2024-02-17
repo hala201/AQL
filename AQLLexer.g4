@@ -10,8 +10,6 @@ PUT             : 'PUT';
 DELETE          : 'DELETE';
 WITH            : 'WITH';
 ON              : 'ON';
-ERROR           : 'ERROR';
-SUCCESS         : 'SUCCESS';
 ELSE            : 'ELSE';
 LOG             : 'LOG';
 EQUAL           : '==';
@@ -26,7 +24,6 @@ COLON           : ':';
 COMMA           : ',';
 DOT             : '.';
 QUOTEDOUBLE     : '"' (~["\r\n])* '"'; // matches any character except double quote and newlines
-QUOTESINGLE     : '\'' (~['\r\n])* '\''; // matches any character except single quote and newlines
 URI             : 'https://' ~[{}[\]\r\n\t ]+;
 URI_TAIL        : '/' ~[{}[\]\r\n\t ]+; // only acceptable if connected by URI + {...}
 VARIABLE        : [a-zA-Z_][a-zA-Z_0-9]*;

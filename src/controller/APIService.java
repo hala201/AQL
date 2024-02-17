@@ -42,23 +42,39 @@ public class APIService {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .header("Content-Type", "application/json");
-
+    
+        JSONObject bodyParams = new JSONObject();
+    
         if (params != null && !params.isEmpty()) {
-            String requestBody = params.toString();
+            for (String key : params.keySet()) {
+                if (key.startsWith("AQL@")) {
+                    // handle special keys prefixed with AQL@
+                    String actualKey = key.substring(4);
+                    if ("Authorization".equals(actualKey)) {
+                        String value = params.getString(key);
+                        requestBuilder.header("Authorization", "Bearer " + value);
+                    } else {
+                        String value = params.getString(key);
+                        requestBuilder.header(actualKey, value);
+                    }
+                } else if (key.startsWith("AQL@Body") || !key.startsWith("AQL@")) {
+                    bodyParams.put(key, params.get(key));
+                }
+            }
+        }
+    
+        if (bodyParams.length() > 0) {
+            String requestBody = bodyParams.toString();
             requestBuilder.method(method, HttpRequest.BodyPublishers.ofString(requestBody));
         } else {
             if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) {
                 requestBuilder.method(method, HttpRequest.BodyPublishers.noBody());
             } else {
-                requestBuilder.method(method, HttpRequest.BodyPublishers.ofString(""));
+                requestBuilder.method(method, HttpRequest.BodyPublishers.noBody());
             }
         }
-
-        try {
-            return requestBuilder.build();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to build request: " + e.getMessage());
-        }
+    
+        return requestBuilder.build();
     }
 
     private Object sendRequest(HttpRequest request) throws Exception {

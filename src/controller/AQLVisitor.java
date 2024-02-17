@@ -1,14 +1,11 @@
 package controller;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import ast.logic.Log;
-import ast.logic.Set;
 import org.json.JSONObject;
 
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -25,16 +22,18 @@ import ast.api.Request;
 import ast.api.WithBlock;
 import ast.condition.Condition;
 import ast.condition.OnElse;
+import ast.logic.Log;
+import ast.logic.Set;
 import ast.loop.Loop;
 import ast.loop.Variable;
-import controller.helper.ConditionUtils;
+import controller.helper.DataEvaluator;
 import controller.helper.StringParser;
 import controller.helper.URIParts;
 import gen.AQLParser;
+import gen.AQLParser.ParamContext;
 import gen.AQLParserBaseVisitor;
 
 public class AQLVisitor extends AQLParserBaseVisitor<Node> {
-    private Map<String, Object> environment = new HashMap<>();
 
   @Override
   public Program visitProgram(AQLParser.ProgramContext ctx) {
@@ -88,9 +87,9 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   @Override
   public GetReq visitGetReq(AQLParser.GetReqContext ctx) {
     URIParts URIparts = new URIParts(ctx.dynamicURI());
-    JSONObject params = null;
+    Params params = null;
     if (ctx.withBlock() != null) { 
-      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+      params = this.visitParams(ctx.withBlock().params());
     }
     return new GetReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
@@ -98,9 +97,9 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   @Override
   public DelReq visitDelReq(AQLParser.DelReqContext ctx) {
     URIParts URIparts = new URIParts(ctx.dynamicURI());
-    JSONObject params = null;
+    Params params = null;
     if (ctx.withBlock() != null) { 
-      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+      params = this.visitParams(ctx.withBlock().params());
     }
     return new DelReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
@@ -108,9 +107,9 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   @Override
   public PutReq visitPutReq(AQLParser.PutReqContext ctx) {
     URIParts URIparts = new URIParts(ctx.dynamicURI());
-    JSONObject params = null;
+    Params params = null;
     if (ctx.withBlock() != null) { 
-      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+      params = this.visitParams(ctx.withBlock().params());
     }
     return new PutReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
@@ -118,28 +117,15 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
   @Override
   public PostReq visitPostReq(AQLParser.PostReqContext ctx) {
     URIParts URIparts = new URIParts(ctx.dynamicURI());
-    JSONObject params = null;
+    Params params = null;
     if (ctx.withBlock() != null) { 
-      params = this.visitWithBlock(ctx.withBlock()).getReqBody(); 
+      params = this.visitParams(ctx.withBlock().params());
     }
     return new PostReq(URIparts.getHead(), URIparts.getBody(), URIparts.getTail(), params);
   }
     
   @Override
-  public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {
-    if (ctx.getChildCount() != 4) { 
-      throw new IllegalStateException("Invalid WITH block");
-    }
-    if (!ctx.getChild(1).getText().equals("{")) {
-      throw new IllegalStateException("Invalid WITH block: missing {");
-    }
-    if (!ctx.getChild(2).getClass().equals(AQLParser.ParamsContext.class)) {
-      throw new IllegalStateException("Invalid WITH block: expected a JSON object as parameters");
-    }
-    if (!ctx.getChild(3).getText().equals("}")) {
-      throw new IllegalStateException("Invalid WITH block: missing }");
-    }
-          
+  public WithBlock visitWithBlock(AQLParser.WithBlockContext ctx) {          
     return new WithBlock(this.visitParams(ctx.params()));
   }
 
@@ -154,30 +140,37 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
           String[] parts = childText.split(":");
           if (parts.length == 2) { 
               String key = StringParser.stripQuotes(parts[0].trim());
-              String valueText = parts[1].trim();
-              Object value = valueText.startsWith("\"") || valueText.startsWith("\'") ? StringParser.stripQuotes(valueText) : StringParser.parseValue(valueText);
-              params.put(key, value);
+              Object val = null;
+              if (((ParamContext) ctx.getChild(i)).value() != null) {
+                  val = DataEvaluator.getValue(((ParamContext) ctx.getChild(i)).value());
+              }
+              else if (((ParamContext) ctx.getChild(i)).dynamicVar() != null) {
+                  val = DataEvaluator.getDynamicVar(((ParamContext) ctx.getChild(i)).dynamicVar());
+              }
+              else {
+                  throw new IllegalArgumentException("Invalid parameter value");
+              }
+              params.put(key, val);
           }
+          
       }
       if (params.isEmpty()) {
         throw new IllegalStateException("Invalid parameters: expected a JSON Object");
       }
+
       return new Params(params);
   }
 
     @Override
     public Loop visitLoop(AQLParser.LoopContext ctx) {
-        Variable loopControlVariable = new Variable(ctx.VARIABLE(0).getText(), new JSONObject());
-        GetReq iterable = null;
+        Variable loopControlVariable = DataEvaluator.getVar(ctx.VARIABLE());
+        Object iterable = null;
         if (ctx.getReq() != null) {
-            iterable = this.visitGetReq(ctx.getReq());
-        } else if (ctx.dynamicVar() != null) {
-            iterable = (GetReq) ctx.dynamicVar().accept(this);
-        } else if (ctx.VARIABLE(1) != null){
-            iterable = (GetReq) ctx.VARIABLE(1).accept(this);
+          iterable = this.visitGetReq(ctx.getReq());
         }
-        // TODO: To be uncommented once SET is ready
-        // if (iterable == null) throw new IllegalArgumentException("FOR EACH: Iterable is Null or undefined");
+        else if (ctx.dynamicVar() != null) {
+          iterable = DataEvaluator.getDynamicVar(ctx.dynamicVar());
+        }
         List<Statement> statements = new ArrayList<>();
         for (AQLParser.StatementContext sCtx : ctx.statement()) {
             Statement statement = (Statement) sCtx.accept(this);
@@ -214,11 +207,11 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
             throw new InvalidRequestStateException("Invalid condition format. " + ctx.getText());
         }
         
-        Object leftOperand = ConditionUtils.evaluateOperand(ctx.getChild(0), this);
+        Object leftOperand = DataEvaluator.getStringRepresentation(ctx.getChild(0), this);
         String operator = ctx.getChild(1).getText();
-        Object rightOperand = ConditionUtils.evaluateOperand(ctx.getChild(2), this);
+        Object rightOperand = DataEvaluator.getStringRepresentation(ctx.getChild(2), this);
 
-        if (leftOperand == null || !ConditionUtils.isValidOperator(operator) || rightOperand == null) {
+        if (leftOperand == null || !DataEvaluator.isValidOperator(operator) || rightOperand == null) {
             throw new IllegalArgumentException("Invalid Conditional Statement at: " + ctx.getText());
         }
         
@@ -226,85 +219,42 @@ public class AQLVisitor extends AQLParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitLog(AQLParser.LogContext ctx) {
-        if(ctx.getChildCount() != 2) {
-            throw new IllegalArgumentException("Invalid log statement");
-        }
-        String message;
-        if (ctx.VARIABLE() != null) {
-            String variableName = ctx.VARIABLE().getText();
-            Object value = environment.get(variableName);
-            message = value != null ? value.toString() : "undefined";
-        } else if (ctx.dynamicVar() != null) {
-            message = getDynamicVar(ctx.dynamicVar());
-        } else if (ctx.value() != null) {
-            message = ctx.value().getText();
+    public Set visitSet(AQLParser.SetContext ctx) {
+        Object val = null;
+        if (ctx.params() instanceof AQLParser.ParamsContext) {
+            val = this.visitParams(ctx.params());
+        } else if (ctx.request() instanceof AQLParser.RequestContext) {
+            val = this.visitRequest(ctx.request());
+        } else if (ctx.value() instanceof AQLParser.ValueContext) {
+            val = DataEvaluator.getValue(ctx.value());
         } else {
-            message = "Error in log statement";
+          throw new IllegalArgumentException("Invalid SET statement: malformed value");
         }
 
-        return new Log(message);
-    }
-    @Override
-    public Node visitSet(AQLParser.SetContext ctx) {
-        String variableName = ctx.VARIABLE().getText();
-        Object value = null;
-        if (ctx.request() != null) {
-            if(ctx.request().getReq().getText().startsWith("GET")) {
-                GetReq getReq = visitGetReq(ctx.request().getReq());
-                value = getReq;
-            } else if(ctx.request().delReq() != null) {
-                DelReq delReq = visitDelReq(ctx.request().delReq());
-                value = delReq;
-            } else if(ctx.request().putReq() != null) {
-                PutReq putReq = visitPutReq(ctx.request().putReq());
-                value = putReq;
-            } else if(ctx.request().postReq() != null) {
-                PostReq postReq = visitPostReq(ctx.request().postReq());
-                value = postReq;
-            }
-            System.out.println(value);
-        } else if (ctx.value() != null) {
-            System.out.println("Value: " + ctx.value().getText());
-            value = ctx.value().getText();
-        } else {
-            throw new IllegalArgumentException("Error in set statement");
-        }
-        environment.put(variableName, value);
-        if(value instanceof IRequest) {
-            return new Set((IRequest) value, variableName);
-        } else if (value instanceof String) {
-            return new Set((String) value, variableName);
-        } else if (value instanceof Integer) {
-            return new Set((Integer) value, variableName);
-        }
-        throw new IllegalArgumentException("Error in set statement");
-    }
-
-    public String getDynamicVar(AQLParser.DynamicVarContext ctx) {
-        StringBuilder fullDynamicVar = new StringBuilder();
-        if (ctx.VARIABLE().size() == 2) {
-            String objectName = ctx.VARIABLE(0).getText();
-            String propertyName = ctx.VARIABLE(1).getText();
-
-            fullDynamicVar.append(objectName).append(".").append(propertyName);
+        String key = ctx.VARIABLE().getText();
+        if (key == null) {
+            throw new IllegalArgumentException("Invalid SET statement: malformed key");
         }
 
-        if (ctx.getText().startsWith("{") && ctx.getText().endsWith("}")) {
-            return "{" + fullDynamicVar.toString() + "}";
-        } else {
-            return fullDynamicVar.toString();
-        }
-    }
-
-    private String getValue(AQLParser.ValueContext ctx) {
-        if (ctx.NUMBER() != null) {
-            return ctx.NUMBER().getText();
-        } else if (ctx.string() != null) {
-            String str = ctx.string().getText();
-            return str.substring(1, str.length() - 1);
-        }
-        return "";
+        return new Set(key, val);
     }
     
+    @Override
+    public Log visitLog(AQLParser.LogContext ctx) {
+        Object val = null;
+
+        if (ctx.value() != null) {
+            val = DataEvaluator.getValue(ctx.value());
+        }
+        else if (ctx.dynamicVar() != null) {
+            val = DataEvaluator.getDynamicVar(ctx.dynamicVar());
+        }
+
+        if (val == null) {
+            throw new IllegalArgumentException("Invalid LOG: missing message to print");
+        }
+        
+        return new Log(val);
+    }
+
 }

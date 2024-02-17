@@ -1,5 +1,6 @@
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,7 @@ import gen.AQLLexer;
 import gen.AQLParser;
 import helper.testData;
 
-public class antlrParserTest {
+public class antlrRegressionTest {
 
     private void testParser(String input, String expectedOutput) {
         AQLParser.ProgramContext tree = this.parse(input);
@@ -23,7 +24,6 @@ public class antlrParserTest {
         return parser.program();
     }
 
-    // TBD: update failing tests due to changes in grammar
     @Test
     public void testSimpleLog() {
         this.testParser(testData.simpleLog_input, testData.simpleLog_parse_output);
@@ -41,12 +41,12 @@ public class antlrParserTest {
 
     @Test
     public void testSimplePut() {
-        this.testParser(testData.simplePut_input, testData.simplePut_parse_output);
+        this.testParser(testData.simplePut_input, testData.simplePut_parse_output.trim());
     }
 
     @Test
     public void testSimplePost() {
-        this.testParser(testData.simplePost_input, testData.simplePost_parse_output);
+        this.testParser(testData.simplePost_input, testData.simplePost_parse_output.trim());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class antlrParserTest {
 
     @Test
     public void testWithBlock() {
-        this.testParser(testData.withBlock_input, testData.withBlock_parse_output);
+        this.testParser(testData.withBlock_input, testData.withBlock_parse_output.trim());
     }
 
     @Test
@@ -69,10 +69,10 @@ public class antlrParserTest {
         this.testParser(testData.loopStatement_Valid_input, testData.loopStatement_parse_output);
     }
 
-//     @Test
-//     public void testComplex1() {
-//         this.testParser(testData.complex1_input, testData.complex1_parse_output);
-//     }
+    @Test
+    public void testComplex1() {
+        this.testParser(testData.complex1_input, testData.complex1_parse_output.trim());
+    }
 
     @Test
     public void testNumberLog() {

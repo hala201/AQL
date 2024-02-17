@@ -5,21 +5,21 @@ import ast.Statement;
 import ast.Value;
 import ast.api.DelReq;
 import ast.api.GetReq;
-import ast.api.PutReq;
-import ast.api.PostReq;
 import ast.api.Params;
+import ast.api.PostReq;
+import ast.api.PutReq;
 import ast.api.Request;
 import ast.api.WithBlock;
+import ast.condition.Condition;
+import ast.condition.OnElse;
 import ast.logic.Log;
 import ast.logic.Set;
 import ast.loop.Loop;
-import ast.condition.Condition;
-import ast.condition.OnElse;
 
 public interface AQLVisitorType<T,U>  {
-    U visit (Program p, T t);
+    U visit(Program p, T t);
 
-    U visit (Statement s, T t);
+    U visit(Statement s, T t);
 
     U visit(Request r, T t);
 
@@ -43,7 +43,7 @@ public interface AQLVisitorType<T,U>  {
 
     U visit(Condition condition, T t);
 
-    U visit(Log l, T t);
-
     U visit(Set set, T t);
+
+    U visit(Log log, T t);
 }

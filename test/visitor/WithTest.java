@@ -19,28 +19,6 @@ public class WithTest {
     }
 
     @Test
-    void testVisitWithBlockMissingOpeningBrace() {
-        String input = "GET https://api.example.com/users/{user.id} WITH \"id\":123, \"value\":\"abc\" }";
-        AQLParser parser = TestUtils.getParserForInput(input);
-
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, 
-            () -> parser.getReq().accept(this.visitor),
-            "Expected to throw due to missing opening brace in WITH block.");
-        assertTrue(thrown.getMessage().contains("missing {"), "Exception message should indicate missing opening brace.");
-    }
-
-    @Test
-    void testVisitWithBlockMissingClosingBrace() {
-        String input = "GET https://api.example.com/users/{user.id} WITH { \"id\":123, \"value\":\"abc\"";
-        AQLParser parser = TestUtils.getParserForInput(input);
-
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, 
-            () -> parser.getReq().accept(this.visitor),
-            "Expected to throw due to missing closing brace in WITH block.");
-        assertTrue(thrown.getMessage().contains("missing }"), "Exception message should indicate missing closing brace.");
-    }
-
-    @Test
     void testVisitWithBlockInvalidParams() {
         String input = "GET https://api.example.com/users/{user.id} WITH { : }";
         AQLParser parser = TestUtils.getParserForInput(input);

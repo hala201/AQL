@@ -1,23 +1,22 @@
 package ast.api;
 
+import java.util.List;
+
 import ast.Node;
 import controller.AQLVisitorType;
 import controller.IRequest;
-import org.json.JSONObject;
-
-import java.util.List;
 
 public class PutReq extends Node implements IRequest {
     private String head;
     private List<String> body;
     private List<String> tail;
-    private JSONObject params;
+    private Params params;
 
-    public PutReq(String head, List<String> body, List<String> tail, JSONObject params) {
+    public PutReq(String head, List<String> body, List<String> tail, Params params2) {
         this.head = head;
         this.body = body;
         this.tail = tail;
-        this.params = params;
+        this.params = params2;
     }
 
     public String getHead() {
@@ -32,7 +31,7 @@ public class PutReq extends Node implements IRequest {
         return this.tail;
     }
 
-    public JSONObject getParams() {
+    public Params getParams() {
         return this.params;
     }
 

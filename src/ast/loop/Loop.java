@@ -6,12 +6,12 @@ import ast.api.GetReq;
 import controller.AQLVisitorType;
 
 public class Loop extends Node {
-    private GetReq iterableResponse;
+    private Object iterableResponse;
     private Variable loopControlVariable;
     private Program loopBody;
 
 
-    public Loop(GetReq iterableResponse, Variable loopControlVariable, Program loopBody) {
+    public Loop(Object iterableResponse, Variable loopControlVariable, Program loopBody) {
         this.iterableResponse = iterableResponse;
         this.loopControlVariable = loopControlVariable;
         this.loopBody = loopBody;
@@ -20,7 +20,7 @@ public class Loop extends Node {
         return this.loopControlVariable;
     }
 
-    public GetReq getIterable() {
+    public Object getIterable() {
         return this.iterableResponse;
     }
 

@@ -51,8 +51,8 @@ public class OnElseConditionVisitorTest {
         Condition result = (Condition) parser.condition().accept(this.visitor);
 
         assertNotNull(result);
-        assertTrue(result.getLeft() instanceof Double);
-        assertTrue(result.getRight() instanceof Double);
+        assertTrue(result.getLeft() instanceof Number);
+        assertTrue(result.getRight() instanceof Number);
     }
 
     @Test

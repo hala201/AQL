@@ -40,7 +40,7 @@ public class DelReqTest {
         assertNotNull(result, "The result should not be null.");
         assertEquals("https://api.example.com/users/", result.getHead(), "The head of the URI should be correctly parsed.");
         assertNotNull(result.getParams(), "Params should not be null.");
-        assertEquals(456, result.getParams().getInt("id"), "The id parameter should be correctly parsed.");
-        assertEquals("xyz-abc", result.getParams().getString("value"), "The value parameter should be correctly parsed.");
+        assertEquals(456, result.getParams().getContent().getInt("id"), "The id parameter should be correctly parsed.");
+        assertEquals("xyz-abc", result.getParams().getContent().getString("value"), "The value parameter should be correctly parsed.");
     }
 }

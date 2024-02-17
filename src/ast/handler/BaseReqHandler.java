@@ -21,9 +21,13 @@ public abstract class BaseReqHandler implements IRequestHandler {
 
     public Object handleRequest(IRequest request, PrintWriter out, Map<String, Integer> environment, Map<Integer, Object> memory) throws UnexpectedException {
         String parsedURI = this.buildUri(request, environment, memory);
-        JSONObject json = request.getParams(); 
+        JSONObject json = null;
+
+        if (request.getParams() != null) {
+            json = request.getParams().getContent();
+        }
+        
         try {
-            System.out.println(parsedURI);
             Object response = this.makeApiCall(parsedURI, json);
             return response;
         } catch (Exception e) {

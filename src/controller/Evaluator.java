@@ -2,11 +2,10 @@ package controller;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
-import ast.logic.Log;
-import ast.logic.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -26,9 +25,11 @@ import ast.handler.DelReqHandler;
 import ast.handler.GetReqHandler;
 import ast.handler.PostReqHandler;
 import ast.handler.PutReqHandler;
+import ast.logic.Log;
+import ast.logic.Set;
 import ast.loop.Loop;
 import ast.loop.Variable;
-import controller.helper.ConditionUtils;
+import controller.helper.DataEvaluator;
 import controller.helper.LocalScope;
 
 public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
@@ -56,11 +57,9 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         return this.memory;
     }
 
-    // TODO: remove most of out.write(), they are for debugging
     private boolean executionHalted = false;
     @Override
     public Void visit(Program p, PrintWriter out) {
-        out.write("doing program ");
         for (Statement st : p.getTasks()) {
             if (this.executionHalted) {
                 break;
@@ -78,7 +77,6 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     @Override
     public Void visit(Statement s, PrintWriter out) {
         if (!this.executionHalted) {
-            out.write("doing statement ");
             s.getStatement().accept(this, out);
         }
         return null;
@@ -86,7 +84,6 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     @Override
     public Void visit(Request r, PrintWriter out) {
-        out.write("doing request ");
         r.getRequest().accept(this, out);
         return null;
     }
@@ -96,6 +93,8 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         IRequestHandler handler = this.handlers.get(request.getClass());
         if (handler != null) {
             try {
+                if (request.getParams() != null)
+                    request.getParams().accept(this, out);
                 return handler.handleRequest(request, out, this.environment, this.memory);
             } catch (Exception e) {
                 out.write("Request Error: " + e.getMessage() + "\n");
@@ -128,127 +127,76 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     @Override
     public Void visit(WithBlock wb, PrintWriter out) {
-        out.write("doing WITH ");
-        wb.getParams().accept(this, out);
+        try {
+            wb.getParams().accept(this, out);
+        } catch (Exception e) {
+            out.write("WITH Error: " + e.getMessage() + "\n");
+            throw new RuntimeException("WITH: " + e.getMessage());
+        }
         return null;
     }
 
     @Override
     public Void visit(Params p, PrintWriter out) {
-        out.write("doing PARAMS ");
+        JSONObject paramsContent = p.getContent();
+        Iterator<String> keys = paramsContent.keys();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value = paramsContent.get(key);
+
+            try {
+                Object actualValue = DataEvaluator.getFromMemory(value, this.environment, this.memory);
+                paramsContent.put(key, actualValue);
+            } catch (Exception e) {
+                out.println("Error processing parameter " + key + ": " + e.getMessage());
+                throw new RuntimeException("Error processing parameter " + key + ": " + e.getMessage());
+            }
+        }
         return null;
     }
 
     @Override
-    public Object visit(Log l, PrintWriter out) {
-        out.print("doing LOG ");
-        String message = l.getMessage();
-        out.print(message);
-        return message;
-    }
-
-    @Override
-    public Object visit(Set s, PrintWriter out) {
-        if (s == null) {
-            throw new NullPointerException("The passed Set object is null.");
-        }
-        if (s.getVariableName() == null) {
-            throw new IllegalArgumentException("SET: variable name is null");
-        }
-        out.write("doing SET ");
-        int currentMemPtr = this.memptr;
-        boolean success = false;
-        try {
-            if (s.getRequest() != null) {
-                Object response = null;
-                out.write("with request ");
-                if (s.getRequest() instanceof GetReq) {
-                    response = ((GetReq) s.getRequest()).accept(this, out);
-                    this.environment.put(s.getVariableName(), currentMemPtr);
-                    this.memory.put(currentMemPtr, response);
-                    this.memptr++;
-                    success = true;
-                    return response;
-                } else if (s.getRequest() instanceof DelReq) {
-                    response = ((DelReq) s.getRequest()).accept(this, out);
-                    this.environment.put(s.getVariableName(), currentMemPtr);
-                    this.memory.put(currentMemPtr, response);
-                    this.memptr++;
-                    success = true;
-                    return response;
-                } else if (s.getRequest() instanceof PutReq) {
-                    response = ((PutReq) s.getRequest()).accept(this, out);
-                    this.environment.put(s.getVariableName(), currentMemPtr);
-                    this.memory.put(currentMemPtr, response);
-                    this.memptr++;
-                    success = true;
-                    return response;
-                } else if (s.getRequest() instanceof PostReq) {
-                    response = ((PostReq) s.getRequest()).accept(this, out);
-                    this.environment.put(s.getVariableName(), currentMemPtr);
-                    this.memory.put(currentMemPtr, response);
-                    this.memptr++;
-                    success = true;
-                    return response;
-                }
-            } else if(s.getRightValue() != null){
-                out.write("with value ");
-                Object value = s.getRightValue();
-                out.write(value.toString());
-                this.environment.put(s.getVariableName(), currentMemPtr);
-                this.memory.put(currentMemPtr, value);
-                this.memptr++;
-                success = true;
-                return value;
-            }
-            throw new IllegalArgumentException("SET: unexpected request type");
-        } catch (Exception e) {
-            this.environment.remove(s.getVariableName());
-            this.memory.remove(currentMemPtr);
-            this.memptr = currentMemPtr;
-            out.write("Error: " + e.getMessage());
-            throw e;
-        } finally {
-            if (!success) {
-                this.memptr = currentMemPtr;
-            }
-        }
-    }
-
-    @Override
     public Void visit(Loop loop, PrintWriter out) {
-        out.write("doing FOR EACH\n");
         LocalScope.pushScope(this.localEnvironmentStack, this.environment);
         Variable loopControlVariable = loop.getLoopControlVariable();
-        GetReq getReq = loop.getIterable();
-        Object iterableData = this.visit(getReq, out);
+        Object iterable = null;
 
-        if (!(iterableData instanceof JSONObject) && !(iterableData instanceof JSONArray)) {
-            throw new IllegalArgumentException("FOR EACH: Expected JSONObject or JSONArray as iterable data");
+        if (loop.getIterable() instanceof GetReq) {
+            iterable = ((GetReq) loop.getIterable()).accept(this, out);
+        } else {
+            iterable = DataEvaluator.getFromMemory(loop.getIterable(), this.environment, this.memory);
         }
 
-        JSONArray dataArray = iterableData instanceof JSONObject ?
-                new JSONArray().put((JSONObject) iterableData) : (JSONArray) iterableData;
+        if (!(iterable instanceof JSONObject || iterable instanceof JSONArray)) {
+            throw new IllegalArgumentException("FOR EACH: iterable is not a JSON object or array");
+        }
 
+        JSONArray dataArray = iterable instanceof JSONObject ?
+                new JSONArray().put((JSONObject) iterable) : (JSONArray) iterable;
+        
+        int currentMemPtr = this.memptr;
+        this.memptr++;
         for (int i = 0; i < dataArray.length(); i++) {
             JSONObject entryObject = dataArray.getJSONObject(i);
             for (Map.Entry<String, Object> entry : entryObject.toMap().entrySet()) {
                 JSONObject entryValue = new JSONObject().put(entry.getKey(), entry.getValue());
                 loopControlVariable.setVariableContent(entryValue);
 
-                int currentMemPtr = this.memptr;
                 this.memory.put(currentMemPtr, entryValue);
                 this.environment.put(loopControlVariable.getVariableName(), currentMemPtr);
-                this.memptr++;
+
+                // System.out.println(i + "\n" + entry + "\n" +this.environment + "\n" + this.memory) ;
 
                 //execute loop body
                 Program loopBody = loop.getLoopBody();
                 if (loopBody.getTasks().size() == 0) throw new IllegalArgumentException("FOR EACH: Empty loop body");
                 this.visit(loopBody, out);
-
-                this.memory.remove(currentMemPtr);
             }
         }
+        // TBD: might be problem if have dupe variable names
+        this.environment.remove(this.memory.get(currentMemPtr));
+        this.memory.remove(currentMemPtr);
 
         LocalScope.popScope(this.localEnvironmentStack);
         return null;
@@ -256,36 +204,38 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     @Override
     public Object visit(Value v, PrintWriter out) {
-        out.print("doing VARIABLE\n");
         v.accept(this, out);
         return null;
     }
 
     @Override
     public Void visit(OnElse oe, PrintWriter out) {
-        out.write("doing ON/ELSE\n");
-        if (oe.getOnBody() == null) {
-            out.write("ON/ELSE Error: empty ON body\n");
-            throw new IllegalArgumentException("ON/ELSE: empty on body");
-        }
-        if (oe.getCondition() == null) {
-            out.write("ON/ELSE Error: missing condition\n");
-            throw new IllegalArgumentException("ON/ELSE: null condition");
-        }
-
         try {
+
+            if (oe.getOnBody() == null) {
+                out.write("empty ON body");
+                throw new IllegalArgumentException("empty on body");
+            }
+            // Allow empty else
+            // if (oe.getElseBody() == null){
+            //     out.write("empty ELSE body");
+            //     throw new IllegalArgumentException("empty else body");
+            // }
+            if (oe.getCondition() == null) {
+                out.write("missing condition");
+                throw new IllegalArgumentException("null condition");
+            }
+
             Boolean con = (Boolean) oe.getCondition().accept(this, out);
             if (con) {
-                LocalScope.pushScope(this.localEnvironmentStack, this.environment);
                 oe.getOnBody().accept(this, out);
-                LocalScope.popScope(this.localEnvironmentStack);
             } else {
-                LocalScope.pushScope(this.localEnvironmentStack, this.environment);
-                oe.getElseBody().accept(this, out);
-                LocalScope.popScope(this.localEnvironmentStack);
+                if (oe.getElseBody() != null)
+                    oe.getElseBody().accept(this, out);
             }
+
         } catch (Exception e) {
-            out.write("Condition Error: " + e.getMessage() + "\n");
+            out.println("ON/ELSE Error: " + e.getMessage());
             throw new IllegalArgumentException("Condition Error: " + e.getMessage());
         }
 
@@ -294,31 +244,67 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     @Override
     public Boolean visit(Condition condition, PrintWriter out) {
-        out.write("Evaluating CONDITION\n");
 
-        Object leftOperand = ConditionUtils.evaluateOperand(condition.getLeft(), this.environment, this.memory);
-        Object rightOperand = ConditionUtils.evaluateOperand(condition.getRight(), this.environment, this.memory);
+        Object leftOperand = DataEvaluator.getFromMemory(condition.getLeft(), this.environment, this.memory);
+        Object rightOperand = DataEvaluator.getFromMemory(condition.getRight(), this.environment, this.memory);
         String operator = condition.getRule();
 
         return this.compareOperands(leftOperand, rightOperand, operator, out);
     }
 
     private Boolean compareOperands(Object left, Object right, String operator, PrintWriter out) {
-        if (left instanceof Number && right instanceof Number) {
-            return ConditionUtils.compareNumber((Number) left, (Number) right, operator);
+        if (!left.getClass().equals(right.getClass())) {
+            return false;
+        } else if (left instanceof Number && right instanceof Number) {
+            return DataEvaluator.compareNumber((Number) left, (Number) right, operator);
         }
         else if (left instanceof String && right instanceof String) {
-            return ConditionUtils.compareString((String) left, (String) right, operator);
+            return DataEvaluator.compareString((String) left, (String) right, operator);
         }
         else if (left instanceof JSONObject && right instanceof JSONObject) {
-            return ConditionUtils.compareJSONObject((JSONObject) left, (JSONObject) right, operator);
+            return DataEvaluator.compareJSONObject((JSONObject) left, (JSONObject) right, operator);
         }
         else if (left instanceof JSONArray && right instanceof JSONArray) {
-            return ConditionUtils.compareJSONArray((JSONArray) left, (JSONArray) right, operator);
+            return DataEvaluator.compareJSONArray((JSONArray) left, (JSONArray) right, operator);
         }
         else {
             throw new IllegalArgumentException("Incompatible operand types for comparison: " + left.getClass() + " and " + right.getClass());
         }
+    }
+
+    @Override
+    public Void visit(Set set, PrintWriter out) {
+        try {
+            this.environment.put(set.getKey(), this.memptr);
+
+            if (set.getVal() instanceof Request) {
+                this.memory.put(this.memptr++, ((Request) set.getVal()).getRequest().accept(this, out));
+            } else if (set.getVal() instanceof Params) {
+                this.memory.put(this.memptr++, ((Params) set.getVal()).getContent());
+            } else {
+                this.memory.put(this.memptr++, set.getVal());
+            }
+        } catch (Exception e) {
+            out.println("SET Error: " + e.getMessage() + "\n");
+            throw new IllegalArgumentException("SET: " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(Log log, PrintWriter out) {
+        try {
+            Object msg = DataEvaluator.getFromMemory(log.getMsgObject(), this.environment, this.memory);
+            if (msg == null) {
+                out.write("trying to print " + log.getMsgObject());
+                throw new IllegalArgumentException("LOG: trying to print null");
+            }
+            out.println(msg);
+        } catch (Exception e) {
+            out.println("LOG Error: " + e.getMessage());
+            throw new IllegalArgumentException("LOG: " + e.getMessage());
+        }
+        return null;
     }
 
 }

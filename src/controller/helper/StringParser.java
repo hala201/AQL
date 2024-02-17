@@ -13,7 +13,7 @@ public class StringParser {
     public static Object parseValue(String text) {
         try {
             if (text.matches("-?\\d+")) {
-                return Integer.parseInt(text);
+                return Double.parseDouble(text);
             } else if (text.matches("-?\\d+\\.\\d+")) {
                 return Double.parseDouble(text);
             }

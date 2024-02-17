@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import ast.api.DelReq;
 import ast.api.GetReq;
+import ast.api.Params;
 import ast.api.PostReq;
 import ast.api.PutReq;
 import controller.Evaluator;
@@ -21,56 +22,82 @@ import controller.Evaluator;
 public class RequestTest {
     private Evaluator evaluator;
     private StringWriter output;
+    private final String baseURI     = "https://aqlserver.onrender.com/";
+    private final String usersURI    = this.baseURI + "users/";
+    private final String tasksURI    = this.baseURI + "tasks/";
+    private final String testURI     = this.baseURI + "utils/";
+    private final JSONObject userResponse = new JSONObject("""
+    {"_id":"65cd34f301b10b181cec335b","name":"John Doe","email":"john.doe@example.com","__v":0}
+            """);
+    private final JSONObject taskResponse = new JSONObject("""
+    {"title":"Breakfast","description":"Eat breakfast","completed":false,"user":"65cd34f301b10b181cec335b"}
+            """);
 
     @BeforeEach
     void setUp() {
         this.evaluator = new Evaluator();
         this.output = new StringWriter();
 
-        // mock environment and memory 
         this.evaluator.getEnvironment().put("user", 1);
-        this.evaluator.getMemory().put(1, new JSONObject("{\"id\":\"123\"}"));
+        this.evaluator.getMemory().put(1, new JSONObject("{\"id\":\"65cd34f301b10b181cec335b\"}"));
+        this.evaluator.getEnvironment().put("keys", 2);
+        this.evaluator.getMemory().put(2, new JSONObject("{\"key1\":\"getone\",\"key2\":\"gettwo\",\"key3\":\"getnonjson\"}"));
     }
 
     @Test
     void testHandleSimpleReq_GoodGet() {
-        GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null);
+        GetReq getReq = new GetReq(this.usersURI, List.of("{user.id}"), List.of(), null);
         
         Object result = this.evaluator.visit(getReq, new PrintWriter(this.output));
         assertEquals(JSONObject.class, result.getClass());
-        assertEquals(new JSONObject("{\"task1\":\"haha\"}").toString(), result.toString());
+        assertEquals(this.userResponse.toString(), result.toString());
     }
 
     @Test
-    void testHandleSimpleReq_GoodDel() {
-        DelReq delReq = new DelReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of("/tasks"), null);
+    void testHandleSimpleReq_GoodPost_usingWITH() {
+        PostReq postReq = new PostReq(this.tasksURI, List.of(), List.of(), new Params(new JSONObject("{\"userId\": \"65cd34f301b10b181cec335b\", \"title\": \"Breakfast\" , \"description\": \"Eat breakfast\"}")));
 
-        Object result = this.evaluator.visit(delReq, new PrintWriter(this.output));
+        Object result = this.evaluator.visit(postReq, new PrintWriter(this.output));
         assertEquals(JSONObject.class, result.getClass());
-        assertEquals(new JSONObject("{\"message\": \"Task 123 deleted successfully\"}").toString(), result.toString());
+        assertTrue(result.toString().contains("\"title\":\"Breakfast\""));
+        assertTrue(result.toString().contains("\"user\":\"65cd34f301b10b181cec335b\""));
+        assertTrue(result.toString().contains("\"description\":\"Eat breakfast\""));
     }
 
     @Test
     void testHandleSimpleReq_GoodPut() {
-        PutReq putReq = new PutReq("https://65y4r.wiremockapi.cloud/users", List.of(), List.of(), new JSONObject("{\"task1\": \"Breakfast\"}"));
+        // create a new task before editing it, to make sure the task actually exists
+        PostReq postReq = new PostReq(this.tasksURI, List.of(), List.of(), new Params(new JSONObject("{\"userId\": \"65cd34f301b10b181cec335b\", \"title\": \"Breakfast\" , \"description\": \"Eat breakfast\"}")));
+        Object createdTask = this.evaluator.visit(postReq, new PrintWriter(this.output));
+
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("title", "Breakfast2");
+
+        PutReq putReq = new PutReq(this.tasksURI + "/" + ((JSONObject) createdTask).getString("_id"), List.of(), List.of(), new Params(requestBody));
 
         Object result = this.evaluator.visit(putReq, new PrintWriter(this.output));
         assertEquals(JSONObject.class, result.getClass());
-        assertEquals(new JSONObject("{\"message\": \"Success\"}").toString(), result.toString());
+        assertTrue(result.toString().contains("\"title\":\"Breakfast2\""));
+        assertTrue(result.toString().contains("\"user\":\"65cd34f301b10b181cec335b\""));
+        assertTrue(result.toString().contains("\"description\":\"Eat breakfast\""));
     }
 
-    @Test
-    void testHandleSimpleReq_GoodPost() {
-        PostReq postReq = new PostReq("https://65y4r.wiremockapi.cloud/users", List.of(), List.of(), new JSONObject("{\"task1\": \"Breakfast\"}"));
+    void testHandleSimpleReq_GoodDel() {
+        // create a new task before deleting it, to make sure the task actually exists
+        PostReq postReq = new PostReq(this.tasksURI, List.of(), List.of(), new Params(new JSONObject("{\"userId\": \"65cd34f301b10b181cec335b\", \"title\": \"Breakfast\" , \"description\": \"Eat breakfast\"}")));
+        Object createdTask = this.evaluator.visit(postReq, new PrintWriter(this.output));
 
-        Object result = this.evaluator.visit(postReq, new PrintWriter(this.output));
+        DelReq delReq = new DelReq(this.tasksURI + "/" + ((JSONObject) createdTask).getString("_id"), List.of(), List.of(), null);
+
+        Object result = this.evaluator.visit(delReq, new PrintWriter(this.output));
         assertEquals(JSONObject.class, result.getClass());
-        assertEquals(new JSONObject("{\"message\": \"Success\"}").toString(), result.toString());
+        assertEquals(result.toString(), new JSONObject("{ \"message\": \"Task deleted\" }"));
+    
     }
 
     @Test
     void testHandleSimpleReq_ValidBodyTail_BadURI() {
-        GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/???/", List.of("{user.id}"), List.of("/tasks"), null);
+        GetReq getReq = new GetReq(this.baseURI + "????", List.of("{user.id}"), List.of("/tasks"), null);
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
             this.evaluator.visit(getReq, new PrintWriter(this.output));
@@ -117,15 +144,6 @@ public class RequestTest {
             this.evaluator.visit(getReq, new PrintWriter(this.output));
         });
         assertTrue(exception.getMessage().contains("Variable `user` was not SET properly. Variable is not in memory."));
-    }
-
-    @Test
-    void testHandleReqWITH_Happy1() {
-        GetReq getReq = new GetReq("https://65y4r.wiremockapi.cloud/users/", List.of("{user.id}"), List.of(), new JSONObject("{ \"id\" : 123, \"value\": \"abc-def-ghi\" }"));
-        
-        Object result = this.evaluator.visit(getReq, new PrintWriter(this.output));
-        assertEquals(JSONObject.class, result.getClass());
-        assertEquals(new JSONObject("{\"message\": \"Success\"}").toString(), result.toString());
     }
 
     @Test

@@ -133,6 +133,8 @@ public class UI {
             results.append(stringWriter.toString());
         }
 
+        results.append("\n\n---------\nDone!\n");
+
         return results.toString();
     }
 

@@ -1,13 +1,8 @@
 package visitor;
-import ast.Node;
-import ast.Program;
-import ast.Statement;
-import ast.api.GetReq;
-import ast.loop.Loop;
-import controller.AQLVisitor;
-import gen.AQLLexer;
-import gen.AQLParser;
-import helper.testData;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.List;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,9 +10,13 @@ import org.antlr.v4.runtime.TokenStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import ast.Statement;
+import ast.api.GetReq;
+import ast.loop.Loop;
+import controller.AQLVisitor;
+import gen.AQLLexer;
+import gen.AQLParser;
+import helper.testData;
 
 public class LoopTest {
     private AQLVisitor visitor;
@@ -41,7 +40,7 @@ public class LoopTest {
 
         assertNotNull(result);
         assertEquals("user", result.getLoopControlVariable().getVariableName());
-        assertEquals("https://api.example.com/users", result.getIterable().getHead());
+        assertEquals("https://api.example.com/users", ((GetReq) result.getIterable()).getHead());
         List<Statement> bodyStatements = result.getLoopBody().getTasks();
         assertEquals(1, bodyStatements.size());
     }
@@ -53,7 +52,7 @@ public class LoopTest {
         Loop result = (Loop) parser.loop().accept(this.visitor);
         assertNotNull(result);
         assertEquals("user", result.getLoopControlVariable().getVariableName());
-        assertNull(result.getIterable()); //TODO: To be modified once SET is ready
+        assertEquals("users", result.getIterable().toString());
         List<Statement> bodyStatements = result.getLoopBody().getTasks();
         assertEquals(1, bodyStatements.size());
     }

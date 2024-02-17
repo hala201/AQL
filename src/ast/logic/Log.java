@@ -4,20 +4,18 @@ import ast.Node;
 import controller.AQLVisitorType;
 
 public class Log extends Node {
-    private final String message;
+    private Object msgObject;
 
-    public Log(Object message) {
-        this.message = message.toString();
+    public Log(Object msg) {
+        this.msgObject = msg;
     }
 
-    public String getMessage() {
-        return message;
+    public Object getMsgObject() {
+        return this.msgObject;
     }
 
     @Override
     public <T, U> U accept(AQLVisitorType<T, U> v, T t) {
         return v.visit(this, t);
     }
-
 }
-

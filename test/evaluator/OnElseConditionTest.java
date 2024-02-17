@@ -60,7 +60,7 @@ class OnElseUnitConditionTest {
 
     @Test
     void testBasicConditionNumber() {
-        this.con = new Condition(2.0, "==", 2.0);
+        this.con = new Condition(2, "==", 2);
         Object result = this.evaluator.visit(this.con, this.out);
 
         assertTrue((boolean) result);
@@ -68,7 +68,23 @@ class OnElseUnitConditionTest {
 
     @Test
     void testBasicConditionNumber2() {
-        this.con = new Condition(3.0, "==", 2.0);
+        this.con = new Condition(3, "==", 2);
+        Object result = this.evaluator.visit(this.con, this.out);
+
+        assertFalse((boolean) result);
+    }
+
+    @Test
+    void testBasicConditionNumberDouble() {
+        this.con = new Condition(2.123, "==", 2.123);
+        Object result = this.evaluator.visit(this.con, this.out);
+
+        assertTrue((boolean) result);
+    }
+
+    @Test
+    void testBasicConditionNumberDouble2() {
+        this.con = new Condition(3.123, "==", 2.3);
         Object result = this.evaluator.visit(this.con, this.out);
 
         assertFalse((boolean) result);
