@@ -110,7 +110,7 @@ public class UI {
         frame.setVisible(true);
     }
 
-    private String parseAndExecuteDSL(String dslInput, JTextArea outputArea) throws Exception {
+    static public String parseAndExecuteDSL(String dslInput, JTextArea outputArea) throws Exception {
         AQLLexer lexer = new AQLLexer(CharStreams.fromString(dslInput));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         AQLParser parser = new AQLParser(tokens);

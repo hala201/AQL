@@ -24,7 +24,7 @@ COLON           : ':';
 COMMA           : ',';
 DOT             : '.';
 QUOTEDOUBLE     : '"' (~["\r\n])* '"'; // matches any character except double quote and newlines
-URI             : 'https://' ~[{}[\]\r\n\t ]+;
+URI             : ('https://' | 'http://') ~[{}[\]\r\n\t ]+;
 URI_TAIL        : '/' ~[{}[\]\r\n\t ]+; // only acceptable if connected by URI + {...}
 VARIABLE        : [a-zA-Z_][a-zA-Z_0-9]*;
 NUMBER          : '-'? [0-9]+ ('.' [0-9]+)?;
