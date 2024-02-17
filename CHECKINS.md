@@ -4,6 +4,7 @@
 - [Check-in 2 Report](#check-in-2-report)
 - [Check-in 3 Report](#check-in-3-report)
 - [Check-in 4 Report](#check-in-4-report)
+- [Check-in 5 Report](#check-in-5-report)
 
 # Check-in 1 Report
 
@@ -361,3 +362,221 @@ The general plan is to have implementation ready by Friday, Feb 9th. We also pla
 
 Plans for integration/end-to-end testing (Feb 9th-16th)
 Integration tests will be gradually added from this week (Feb 9th-16th)
+
+# Check-in 5 Report
+
+## Final User Study:
+
+### Their Introduction to the DSL:
+
+AQL ((web) API Query Language) aims to help with common frustrations encountered when interacting with web APIs. AQL streamlines the process of making API requests, handling responses, and implementing logic based on those responses. We aim to make this process better for our target users, backend developers (of all levels of experience).
+Before AQL, interacting with web APIs involved several steps that could be tedious and error-prone, especially for those not deeply familiar with programming:
+
+1.  **Complexity in Making Requests**: Each programming language has its own way of making HTTP requests, requiring developers to learn and manage various libraries or modules.
+2.  **Handling Responses**: Parsing and extracting useful information from API responses often involves dealing with different formats, which can get complicated quickly.
+3.  **Implementing Logic**: Writing logic based on API responses (e.g., conditional statements, loops) necessitates a good grasp of the programming language used, adding another layer of complexity.
+4.  **State Management**: Keeping track of variables and states across different API calls can be challenging without a clear and organized approach.
+
+AQL addresses these challenges by providing a straightforward, readable syntax for making API requests, handling data, and implementing control flow logic. This is done through the features below:
+
+1.  **Simplified Requests**: AQL abstracts the complexity of making HTTP requests. Whether it’s a GET, PUT, POST, or DELETE request, you simply specify the command and the URL. Optionally, you can include a body, headers, authorizations, etc. with the request. By default, the { key, value } will be counted as body unless the key is specified with a special keyword “AQL@”.
+
+```
+GET https://api.com
+PUT https://api.com WITH { “name”: "Bob", “AQL@Authorization”: “...”}
+```
+
+2. **Variable Management**: AQL allows you to set data (like strings, integers, or API responses) to variables for later use, simplifying state management and data manipulation. You can only use SET statically as it cannot be modified afterward, only re-SET. We also allow users to set JSON to a variable to mimic a list.
+
+```
+SET 2 AS x
+SET { “name1”: "Bob", “name2” : “Ben” } AS y
+LOG y.name1
+```
+
+3. **Control Flow Logic**: Implementing loops and conditional logic is straightforward with AQL, making it easier to handle complex API interaction patterns.
+
+```
+FOR EACH name IN studentList {
+  LOG name
+}
+ON x == 2 {
+  LOG x
+} ELSE {
+  LOG “failed”
+}
+```
+
+There are other features for more convenience:
+You can access the first key and value from a JSON variable like below
+
+```
+SET {"name" : "ted", “name2” : “name” } AS var
+LOG var.AQLKEY // prints “name”
+LOG var.AQLVALUE //prints “ted”
+```
+
+**Example Scenario**
+
+Imagine you’re managing a list of tasks via an API. Without AQL, you’d need to write boilerplate code for each request, handle the parsing of JSON responses manually, and then write additional code for any logic based on the responses. With AQL, you can:
+
+```
+SET GET https://api.com/tasks AS list
+FOR EACH task IN list {
+  PUT https://api.com/tasks/{task.id} WITH { “status”: “completed” }
+  LOG task.id // will error if task has no .id
+}
+```
+
+OR
+
+```
+FOR EACH task IN GET https://api.com/tasks {
+  PUT https://api.com/tasks/{task.id} WITH { “status”: “completed” }
+  LOG task.id // will error if task has no .id
+}
+```
+
+### Their Assigned Tasks & Their Usage of AQL:
+
+#### **Tasks 1:**
+
+Imagine that you have developed various secured endpoints for a trip generation application. You have users and trips. You are testing out the response of those endpoints.
+
+The endpoint to login is POST to: https://travelerstea-906d.onrender.com/api/users/login This endpoint will return a JSON that contains an accessToken. A valid login info is the following:
+{ "email": "testnlm@nlm", "password": "123" }
+
+The endpoint to create a trip is POST to: https://travelerstea-906d.onrender.com/api/trips This endpoint is protected, you need to send Authorization with <accessToken> from logging in. You will also need to create and send a body to create a trip in the following format:{
+"tripLocation": "NAME", "stagesPerDay": NUMBER < 2, "budget": NUMBER, "numberOfDays": NUMBER < 2, "AQL@Authorization": accessToken
+}
+
+Your job is to print the response you get from creating the trip.
+
+**User 1's** code:
+(A developer with coding experience with prior API knowledge)
+
+```
+SET POST https://travelertea-906d.onrender.com/api/users/login WITH { "email": "testnlm@nlm", "password": "123" } AS list
+SET POST https://travelerstea-906d.onrender.com/api/trips WITH ｛
+"tripLocation": "London", "stagesPerDay": 1, "budget": 100, "numberODays": 1, "AQL@Authorization": list.accesToken
+} AS RESULT
+LOG RESULT
+```
+
+**User 2's** code:
+(A student with coding experience with little prior API knowledge)
+
+```
+SET POST https://travelertea-906d.onrender.com/api/users/login WITH { "email": "testnlm@nlm", "password": "123" } AS authToken
+SET POST https://travelerstea-906d.onrender.com/api/trips WITH｛
+   "tripLocation": "Cambodia",
+   "stagesPerDay": 1,
+   "budget": 100,
+   "numberODays": 1,
+   "AQL@Authorization": authToken.accessToken
+} AS response
+LOG response
+```
+
+#### **Tasks 2:**
+
+Imagine you are trying to find all the users of your application.
+
+The backend of your application is working with the endpoint: https://aqlserver.onrender.com/users
+
+Each user has an associated property called \_id that is unique for each of them (user.\_id). Using this property’s value, you can get even more information about them. You may assume you can use https://aqlserver.onrender.com/users/{users._id}/tasks to get a list of all of THAT ONE USER’s tasks.
+
+As you will notice, the response is not too nice and each user has several other key, value pairs that you need to skip over because you only care about the user.\_id
+
+Your job is to print out all information tasks’ information of all users.
+
+**User 1's** code:
+(A developer with coding experience with prior API knowledge)
+
+```
+SET GET https://aqlserver.onrender.com/users AS studentlist
+FOR EACH info IN studentlist {
+   ON info.AQLKEY = "_id" {
+      SET GET https://aqlserver.onrender.com/users/{info._id}/tasks AS tasks
+      FOR EACH task IN tasks {
+         LOG task
+      ｝
+   } ELSE {
+      LOG ""
+   }
+}
+```
+
+**User 2's** code:
+(A student with coding experience with little prior API knowledge)
+
+```
+SET GET https://aqlserver.onrender.com/users AS userlist
+FOR EACH key IN userlist {
+   ON key.AQLKEY = "_id" {
+      SET GET https://aqlserver.onrender.com/users/{key._id}/tasks AS userTasks
+      LOG userTasks
+   } ELSE {
+      LOG ""
+   }
+}
+```
+
+### Results & Feedbacks:
+
+- Users were able to write working codes for task 1 perfectly and without hints, after about 5 minutes verbal introduction to the language.
+
+- User 1 was able to write task 2 perfectly with 1 hint regarding ON/ELSE. User 2 was able to write task 2 perfectly with 2 hints regarding ON/ELSE and FOR EACH. Mainly, they were both not sure about the response of the API (what the key-value pair is), user 2 was able to figure it out themselves by debugging and logging.
+
+- Both users were able to interact with and use the interface easily.
+
+- Both users found it confusing how "FOR EACH" loops over the key-value pair instead of individual JSONObjects. Mainly, they weren't sure what the object was in the list at each iteration.
+
+- User 2 suggested we allow not having ELSE (using ON without ELSE).
+
+- User 1 suggested we support quote mark inside the string (""quote"" or "\"quote\"").
+
+- User 2 was able to debug from the error logs by themselves.
+
+## Changes
+
+- Inspired by the first user study, we allow users to set a JSON Object to a variable to imitate a List data structure as .
+  eg.
+```
+SET {‘1’: “ben”, ‘2’: 10} AS List
+```  
+
+- Realizing the importance of headers, authorizations, etc., we allow users to send not only body, but headers and more with the requests as well.
+  eg.
+```
+PUT https://api.com WITH { "AQL@Authorization": authToken.accessToken }
+```
+
+- Realizing that it might be hard for users to know exactly what the key/value is from the response, we allow users to access the first key and value from a JSON variable.
+  eg.
+```
+SET {"name" : "ted", “name2” : “name” } AS var
+LOG var.AQLKEY // prints “name”
+LOG var.AQLVALUE //prints “ted”
+```
+
+- Removed (ERROR | SUCCESS) from conditional grammar, since it require too much changes to how we deal with responses.
+
+### BUG FIXES
+
+- ON/ELSE: we now allow any type of Number (beyond just Integer).
+- ON/ELSE: we now allow using ON without ELSE, as inspired by the final user study.
+
+## Final Video Plan:
+
+- Zoom meeting where we present and share screen. Ideally, each one of us write a paragraph of 150 words to explain what our features did.
+- We will try to create a story/presentation.
+  - Show what the DSL is trying to solve (show how something can be frustrating and how our DSL helps)
+  - Target users
+  - The features (mention and very briefly explain, not too detailed eg. don't go through grammar)
+
+## Timeline
+
+- Friday Feb 16th - Monday Feb 19th to polish everything else and add E2E & Integration tests.
+- Monday Feb 19th film the video
+- Hopefully we will be all done by Feb 20th.
