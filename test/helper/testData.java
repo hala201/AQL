@@ -126,334 +126,54 @@ public class testData {
     public static String getCondition_valid_input5_VARandDVAR = "A == dB.name";
     public static String getCondition_valid_input6_VARandVAL = "A == \"bob\"";
 
-    public static String e2e_trip_success_1_input = "SET POST https://travelerstea-906d.onrender.com/api/users/login WITH { \"email\": \"testnlm@nlm\", \"password\": \"123\" } AS list\n" +
-            "SET POST https://travelerstea-906d.onrender.com/api/trips WITH {\n" +
-            "\t\"tripLocation\": \"LONDON\",\n" +
-            "\t\"stagesPerDay\": 1,\n" +
-            "\t\"budget\": 100,\n" +
-            "\t\"numberOfDays\": 1,\n" +
-            "\t\"AQL@Authorization\": {list.accessToken}\n" +
+    public static String e2e_trip_success_1_input = "SET POST https://travelerstea-906d.onrender.com/api/users/login WITH { \"email\": \"testnlm@nlm\", \"password\": \"123\" } AS userInfo\n" +
+            "SET GET https://travelerstea-906d.onrender.com/api/trips WITH {\n" +
+            "\t\"AQL@Authorization\": {userInfo.accessToken}\n" +
             "} AS RESULT\n" +
             "LOG RESULT";
-    public static String e2e_trip_success_1_output = "{\"stagesPerDay\":1,\"tripLongitude\":-0.12695659999999998,\"__v\":0,\"isPublic\":false,\"tripLocation\":\"LONDON\",\"_id\":\"65d109a8f270343a277d3a43\",\"numberOfDays\":1,\"tripLatitude\":51.51941329999999,\"budget\":100}\n";
+    public static String e2e_trip_success_1_output = """
+    [{
+        "_id": "65d12871f270343a277d3a9b",
+        "tripLocation": "paris",
+        "stagesPerDay": 1,
+        "budget": 100,
+        "numberOfDays": 1,
+        "isPublic": false,
+        "__v": 0,
+        "tripLatitude": 48.858370099999995,
+        "tripLongitude": 2.2944812999999997,
+        "tripName": "DONT DELETE THIS PARIS"
+    }]
+                    """;
+                    
+    public static String e2e_aqlserver_success_1_input = """
+    SET GET https://aqlserver.onrender.com/users AS stuList
+    LOG stuList
+    FOR EACH stu IN stuList {
+        ON stu.AQLKEY == "_id" {
+            SET GET https://aqlserver.onrender.com/users/{stu._id}/tasks AS tasks
+            FOR EACH task IN tasks {
+                LOG task
+            }
+        }
+    }    
+                    """;
+    public static String e2e_aqlserver_success_1_output = """
+    [{"__v":0,"name":"John Doe","_id":"65cd34f301b10b181cec335b","email":"john.doe@example.com"}]
+    {"__v":0}
+    {"description":"this is task 1"}
+    {"_id":"65cd35ee01b10b181cec3360"}
+    {"completed":false}
+    {"title":"Task 1"}
+    {"user":"65cd34f301b10b181cec335b"}
+    {"__v":0}
+    {"description":"this is task 2"}
+    {"_id":"65cd382b8e32036d2c4a3c39"}
+    {"completed":true}
+    {"title":"Task 2"}
+    {"user":"65cd34f301b10b181cec335b"}
+                    """;
 
-    public static String e2e_aqlserver_success_1_input = "SET GET https://aqlserver.onrender.com/users AS stuList\n" +
-            "LOG stuList\n" +
-            "FOR EACH stu IN stuList {\n" +
-            "\tON stu.AQLKEY == \"_id\" {\n" +
-            "\t\tSET GET https://aqlserver.onrender.com/users/{stu._id}/tasks AS tasks\n" +
-            "\t\tFOR EACH task IN tasks {\n" +
-            "\t\t\tLOG task\n" +
-            "\t\t}\n" +
-            "\t}\n" +
-            "}";
-    public static String e2e_aqlserver_success_1_output = "[{\"__v\":0,\"name\":\"John Doe\",\"_id\":\"65cd34f301b10b181cec335b\",\"email\":\"john.doe@example.com\"}]\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"this is task 1\"}\n" +
-            "{\"_id\":\"65cd35ee01b10b181cec3360\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Task 1\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"this is task 2\"}\n" +
-            "{\"_id\":\"65cd382b8e32036d2c4a3c39\"}\n" +
-            "{\"completed\":true}\n" +
-            "{\"title\":\"Task 2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00dcb6d4699470705ce3a\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00dcf6d4699470705ce3d\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00dfa6d4699470705ce40\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00e2b6d4699470705ce43\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00e756d4699470705ce46\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00e7d6d4699470705ce4a\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00ed36d4699470705ce4d\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00ee86d4699470705ce50\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d00eef6d4699470705ce53\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast2\"}\n" +
-            "{\"_id\":\"65d00fe36d4699470705ce57\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d010316d4699470705ce5a\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0107a6d4699470705ce5d\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d010cc6d4699470705ce60\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011466d4699470705ce64\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011466d4699470705ce68\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011796d4699470705ce6c\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0117a6d4699470705ce70\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0118e6d4699470705ce74\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011b86d4699470705ce80\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011f36d4699470705ce85\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d011f36d4699470705ce89\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d013006d4699470705ce8e\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d013006d4699470705ce92\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d013e36d4699470705ce97\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d013e36d4699470705ce9b\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0145a6d4699470705cea0\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0145b6d4699470705cea4\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d014aa6d4699470705cea9\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d014ab6d4699470705cead\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d014e26d4699470705ceb2\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d014e36d4699470705ceb6\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015186d4699470705cebb\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015196d4699470705cebf\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015456d4699470705cec4\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015466d4699470705cec8\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0156d6d4699470705cecd\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0156d6d4699470705ced1\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015946d4699470705ced6\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015956d4699470705ceda\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015c56d4699470705cedf\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d015c56d4699470705cee3\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0177a6d4699470705cee8\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0177a6d4699470705ceec\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0f37fc8ec763ab142ba25\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0f380c8ec763ab142ba29\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0facbc8ec763ab142ba2e\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d0faccc8ec763ab142ba32\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d1017bc8ec763ab142ba37\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n" +
-            "{\"__v\":0}\n" +
-            "{\"description\":\"Eat breakfast\"}\n" +
-            "{\"_id\":\"65d1017cc8ec763ab142ba3b\"}\n" +
-            "{\"completed\":false}\n" +
-            "{\"title\":\"Breakfast2\"}\n" +
-            "{\"user\":\"65cd34f301b10b181cec335b\"}\n";
 
     public static String e2e_cat_1_success_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
             "FOR EACH cat IN cats {\n" +
@@ -466,4 +186,115 @@ public class testData {
             "{\"text\":\"Domestic cats spend about 70 percent of the day sleeping and 15 percent of the day grooming.\"}\n" +
             "{\"text\":\"The frequency of a domestic cat's purr is the same at which muscles and bones repair themselves.\"}\n" +
             "{\"text\":\"Cats are the most popular pet in the United States: There are 88 million pet cats and 74 million dogs.\"}\n";
+
+    public static String e2e_cat_2_success_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats1\n" +
+            "SET GET https://cat-fact.herokuapp.com/facts/ AS cats2\n" +
+            "\tON cats1 == cats2 {\n" +
+            "\t\tLOG \"YES\"\n" +
+            "}";
+
+    public static String e2e_nestedOnElse_input = "SET \"{1, 2, 3}\" AS nums1\n" +
+            "SET \"{1, 2, 3}\" AS nums2\n" +
+            "SET \"{1, 2, 2}\" AS nums3\n" +
+            "ON nums1 == nums2 {\n" +
+            "\tLOG \"MATCH\"\n" +
+            "}\n" +
+            "\n" +
+            "ON nums2 != nums3 {\n" +
+            "\tON nums1 == nums3 {\n" +
+            "\t\tLOG \"MISMATCH\"\n" +
+            "\t} ELSE {\n" +
+            "\t\tLOG \"MISMATCH\"\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_nestedOnElse_output = "MATCH\n" +
+            "MISMATCH\n" +
+            "\n" +
+            "\n";
+
+    public static String e2e_cat_2_success_output = "YES";
+
+    public static String e2e_cat_EmptyElse_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t\tLOG cat\n" +
+            "\t}\n" + " ELSE { \n \t }" +
+            "}";
+
+    public static String e2e_cat_EmptyON_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_EmptyON_failed_ouput = "Empty ON body";
+
+    public static String e2e_cat_EmptyElse_failed_ouput = "Empty ELSE body";
+
+
+    public static String e2e_cat_EmptyLog_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t\tLOG \n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_EmptyLog_failed_output = "Invalid LOG: missing message to print";
+
+    public static String e2e_cat_dynamicVar_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEYs == \"text\" {\n" +
+            "\t\tLOG cat\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_dynamicVar_failed_output = "ON/ELSE Error: Property `AQLKEYs` not found for variable `cat`";
+
+    public static String e2e_cat_Variable_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t\tLOG dog\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_Variable_failed_output = "LOG Error: Variable `dog` not defined in environment.";
+
+    public static String e2e_cat_Condition_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY += \"text\" {\n" +
+            "\t\tLOG cat\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_Condition_failed_output = "Invalid condition format. cat.AQLKEY\"text\"";
+
+    public static String e2e_cat_Comparator_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS cats1\n" +
+            "SET GET https://cat-fact.herokuapp.com/facts/ AS cats2\n" +
+            "\tON cats1 > cats2 {\n" +
+            "\t\tLOG \"YES\"\n" +
+            "}";
+
+    public static String e2e_cat_Comparator_failed_output = "ON/ELSE Error: Unsupported operator for JSONArray comparison: >";
+
+    public static String e2e_cat_URL1_failed_input = "SET GET https:/cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t\tLOG cat\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_URL1_failed_output = "Syntax errors found.\n" +
+            "Syntax error at line 1:8 - missing URI at 'https'Syntax error at line 1:13 " +
+            "- mismatched input ':' expecting {'AS', 'WITH', '{', '.', URI_TAIL, VARIABLE}";
+
+    public static String e2e_cat_URL2_failed_input = "SET GET https//cat-fact.herokuapp.com/facts/ AS cats\n" +
+            "FOR EACH cat IN cats {\n" +
+            "\tON cat.AQLKEY == \"text\" {\n" +
+            "\t\tLOG cat\n" +
+            "\t}\n" +
+            "}";
+
+    public static String e2e_cat_URL2_failed_output = "Syntax errors found.\n" +
+            "Syntax error at line 1:8 - missing URI at 'https'";
 }

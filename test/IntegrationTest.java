@@ -1,29 +1,24 @@
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 
-import ast.Node;
-import ast.Program;
-import controller.AQLVisitor;
-import gen.AQLLexer;
-import gen.AQLParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import ast.Node;
+import controller.AQLVisitor;
 import controller.Evaluator;
-
-import main.UI;
-
+import gen.AQLLexer;
+import gen.AQLParser;
 import helper.testData;
+import main.UI;
 
 class IntegrationTest {
     // End-to-end test
@@ -69,20 +64,54 @@ class IntegrationTest {
         assertEquals(aqlOutput, result,"Fail to match the expected output for: " + test);
     }
 
+    private void testJSONs(String aqlInput, String expectedOutput, String testDescription) {
+        JSONArray resultArray = null;
+        JSONArray expectedArray = null;
+        try {
+            String resultString = UI.parseAndExecuteDSL(aqlInput, null).replaceAll("\n", "").replaceAll("\r", "");
+            resultArray = new JSONArray(resultString);
+        } catch (Exception e) {
+            System.out.println("input: " + aqlInput + "\n caused exception from parseAndExecuteDSL");
+            assert(false);
+        }
+    
+        try {
+            expectedOutput = expectedOutput.replaceAll("\n", "").replaceAll("\r", "");
+            expectedArray = new JSONArray(expectedOutput);
+        } catch (Exception e) {
+            System.out.println("Invalid expected JSON format for: " + testDescription);
+            assert(false);
+        }
+
+        System.out.println(resultArray);
+        System.out.println(expectedArray);
+    
+        boolean allElementsFound = true;
+        for (int i = 0; i < expectedArray.length(); i++) {
+            JSONObject expectedElement = expectedArray.getJSONObject(i);
+            boolean found = false;
+            for (int j = 0; j < resultArray.length() && !found; j++) {
+                JSONObject resultElement = resultArray.getJSONObject(j);
+                if (resultElement.similar(expectedElement)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                allElementsFound = false;
+                break;
+            }
+        }
+    
+        assertTrue(allElementsFound, "Not all expected elements found in the result for: " + testDescription);
+    }
+
     @Test
     void testSimpleGet() {
         this.inputTest_UI(testData.simpleGet_input,
                 testData.simpleSuccessNoLog,
                 "simple get test");
     }
-
-    // TODO: actual url needed
-//    @Test
-//    void testSimpleDelete() {
-//        this.inputTest_UI(testData.simpleDelete_input,
-//                testData.simpleSuccessNoLog,
-//                "simple delete test");
-//    }
 
      @Test
      void testSimplePost() {
@@ -105,38 +134,16 @@ class IntegrationTest {
                 "simple log test");
     }
 
-//    @Test
-//    void testTrip_1() {
-        // Special case, "_id" is changing every time
-//        this.inputTest_UI(testData.e2e_trip_success_1_input,
-//                testData.e2e_trip_success_1_output + testData.simpleSuccessNoLog,
-//                "trip 1 success test");
-//        String result = "";
-//        String input = testData.e2e_trip_success_1_input;
-//        String expected = testData.e2e_trip_success_1_output + testData.simpleSuccessNoLog;
-//        try
-//        {
-//           result = UI.parseAndExecuteDSL(input, null);
-//        }
-//        catch (Exception e)
-//        {
-//            System.out.println("input: " + input + "\n caused exception from parseAndExecuteDSL");
-//            assert(false);
-//        }
-//        // Suppress line separator difference
-//        expected = expected.replaceAll("\n", "").replaceAll("\r", "");
-//        result = result.replaceAll("\n", "").replaceAll("\r", "");
-//        int part1 = expected.indexOf("_id");
-//        int part2 = expected.indexOf("numberOfDays");
-//        assertEquals(expected.length(), result.length());
-//        assertEquals(expected.substring(0, part1), result.substring(0, part1), "Fail to match the expected output for: trip 1 success test");
-//        assertEquals(expected.substring(part2), result.substring(part2), "Fail to match the expected output for: trip 1 success test");
-
-//    }
-
+    @Test
+    void testTrip_1() {
+        this.testJSONs(testData.e2e_trip_success_1_input,
+                testData.e2e_trip_success_1_output + testData.simpleSuccessNoLog,
+                "trip server 1 success test");
+    }
+    
     @Test
     void testServer_1() {
-        this.inputTest_UI(testData.e2e_aqlserver_success_1_input,
+        this.testJSONs(testData.e2e_aqlserver_success_1_input,
                 testData.e2e_aqlserver_success_1_output + testData.simpleSuccessNoLog,
                 "server 1 success test");
     }
@@ -146,5 +153,73 @@ class IntegrationTest {
         this.inputTest_UI(testData.e2e_cat_1_success_input,
                 testData.e2e_cat_1_success_output + testData.simpleSuccessNoLog,
                 "cat 1 success test");
+    }
+
+    @Test
+    void testCat_2() {
+        this.inputTest_UI(testData.e2e_cat_2_success_input,
+                testData.e2e_cat_2_success_output + testData.simpleSuccessNoLog,
+                "cat 2 success test");
+    }
+
+    @Test
+    void testNestedOnElse() {
+        this.inputTest_UI(testData.e2e_cat_2_success_input,
+                testData.e2e_cat_2_success_output + testData.simpleSuccessNoLog,
+                "cat 2 success test");
+    }
+
+    @Test
+    void testFailureCat_EmptyON() {
+        this.inputTest_UI(testData.e2e_nestedOnElse_input,
+                testData.e2e_nestedOnElse_output + testData.simpleSuccessNoLog, "Nested OnElse success");
+    }
+
+    @Test
+    void testFailureCat_EmptyELSE() {
+        this.inputTest_UI(testData.e2e_cat_EmptyElse_failed_input,
+                testData.e2e_cat_EmptyElse_failed_ouput + testData.simpleSuccessNoLog, "cat Empty ELSE failed input success test");
+    }
+
+    @Test
+    void testFailureCat_EmptyLOG() {
+        this.inputTest_UI(testData.e2e_cat_EmptyLog_failed_input,
+                testData.e2e_cat_EmptyLog_failed_output + testData.simpleSuccessNoLog, "cat Empty LOG failed input success test");
+    }
+
+    @Test
+    void testFailureCat_dynamicVar() {
+        this.inputTest_UI(testData.e2e_cat_dynamicVar_failed_input,
+                testData.e2e_cat_dynamicVar_failed_output + testData.simpleSuccessNoLog, "cat dynamicVar failed input success test");
+    }
+
+    @Test
+    void testFailureCat_Variable() {
+        this.inputTest_UI(testData.e2e_cat_Variable_failed_input,
+                testData.e2e_cat_Variable_failed_output + testData.simpleSuccessNoLog, "cat Variable failed input success test");
+    }
+
+    @Test
+    void testFailureCat_Condition() {
+        this.inputTest_UI(testData.e2e_cat_Condition_failed_input,
+                testData.e2e_cat_Condition_failed_output + testData.simpleSuccessNoLog, "cat Condition failed input success test");
+    }
+
+    @Test
+    void testFailureCat_Comparator() {
+        this.inputTest_UI(testData.e2e_cat_Comparator_failed_input,
+                testData.e2e_cat_Comparator_failed_output + testData.simpleSuccessNoLog, "cat Comparator failed input success test");
+    }
+
+    @Test
+    void testFailureURL1_Comparator() {
+        this.inputTest_UI(testData.e2e_cat_URL1_failed_input,
+                testData.e2e_cat_URL1_failed_output + testData.simpleSuccessNoLog, "cat URL1 failed input success test");
+    }
+
+    @Test
+    void testFailureURL2_Comparator() {
+        this.inputTest_UI(testData.e2e_cat_URL2_failed_input,
+                testData.e2e_cat_URL2_failed_output + testData.simpleSuccessNoLog, "cat URL2 failed input success test");
     }
 }

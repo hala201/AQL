@@ -119,18 +119,23 @@ public class UI {
         PrintWriter out = new PrintWriter(stringWriter);
         SyntaxErrorListener errorListener = new SyntaxErrorListener(out);
         parser.addErrorListener(errorListener);
-        
-        AQLVisitor visitor = new AQLVisitor();
-        ProgramContext tree = parser.program();
-        Node parsedProgram = tree.accept(visitor);
 
         StringBuilder results = new StringBuilder();
-        if (!errorListener.hasError()) {
-            parsedProgram.accept(new Evaluator(), out);
-            results.append(stringWriter.toString());
-        } else {
-            results.append("Syntax errors found.\n");
-            results.append(stringWriter.toString());
+
+        try {
+            AQLVisitor visitor = new AQLVisitor();
+            ProgramContext tree = parser.program();
+            Node parsedProgram = tree.accept(visitor);
+
+            if (!errorListener.hasError()) {
+                parsedProgram.accept(new Evaluator(), out);
+                results.append(stringWriter.toString());
+            } else {
+                results.append("Syntax errors found.\n");
+                results.append(stringWriter.toString());
+            }
+        } catch (Exception e) {
+            results.append(e.getMessage());
         }
 
         results.append("\n\n---------\nDone!\n");
