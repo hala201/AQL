@@ -297,4 +297,239 @@ public class testData {
 
     public static String e2e_cat_URL2_failed_output = "Syntax errors found.\n" +
             "Syntax error at line 1:8 - missing URI at 'https'";
+
+    public static String e2e_local_scope_failed_input = "SET GET https://65y4r.wiremockapi.cloud/users/tasks2 AS users\n" +
+            "FOR EACH user IN users {\n" +
+            "\t\tSET 3 AS x\n" +
+            "\t}\n" +
+            "LOG x";
+    public static String e2e_local_scope_failed_output = "LOG Error: Variable `x` not defined in environment.";
+
+    public static String e2e_cat_URL_local_scope_failed_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS users\n" +
+            "FOR EACH user IN users {\n" +
+            "\t\tSET 3 AS x\n" +
+            "\t}\n" +
+            "LOG x";
+
+    public static String e2e_cat_URL_dupe_var_name_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS users\n" +
+            "FOR EACH user IN users { \n" +
+            "\t\tSET 3 AS x\n" +
+            "\t}\n" +
+            "SET 4 AS x\n" +
+            "LOG x";
+    public static String e2e_cat_URL_dupe_var_name_output = "4";
+
+    public static String e2e_nested_scopes_loop_fail_early_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS users\n" +
+            "FOR EACH user IN users { \n" +
+            "\t\tSET 3 AS x\n" +
+            "\t\tFOR EACH joke IN GET https://65y4r.wiremockapi.cloud/users/tasks2 {\n" +
+            "\t\t\t\tSET 5 AS y\n" +
+            "\t\t\t\tLOG y\n" +
+            "\t\t\t}\n" +
+            "\t\tLOG y\n" +
+            "\t}";
+    public static String e2e_nested_scopes_loop_fail_early_output = "5\n" +
+            "5\n" +
+            "LOG Error: Variable `y` not defined in environment.\n";
+
+    public static String e2e_nested_scopes_loop_input = "SET GET https://cat-fact.herokuapp.com/facts/ AS users\n" +
+            "FOR EACH user IN users { \n" +
+            "\t\tSET 3 AS x\n" +
+            "\t\tFOR EACH joke IN GET https://65y4r.wiremockapi.cloud/users/tasks2 {\n" +
+            "\t\t\t\tSET 5 AS y\n" +
+            "\t\t\t\tLOG y\n" +
+            "\t\t\t}\n" +
+            "\t}\n" +
+            "LOG y";
+    public static String e2e_nested_scopes_loop_output = "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "5\n" +
+            "LOG Error: Variable `y` not defined in environment.\n";
+
+    public static String e2e_nested_scope_success_input = "SET GET https://65y4r.wiremockapi.cloud/users/tasks2 AS users\n" +
+            "FOR EACH user IN users { \n" +
+            "\t\tSET 3 AS x\n" +
+            "\t\tFOR EACH joke IN GET https://65y4r.wiremockapi.cloud/users/tasks2 {\n" +
+            "\t\t\t\tSET 5 AS y\n" +
+            "\t\t\t\tLOG x\n" +
+            "\t\t\t\tLOG user\n" +
+            "\t\t\t\tLOG joke\n" +
+            "\t\t\t}\n" +
+            "\t\tLOG x\n" +
+            "\t}";
+    public static String e2e_nested_scope_success_ouput = "3\n" +
+            "{\"task1\":\"haha\"}\n" +
+            "{\"task1\":\"haha\"}\n" +
+            "3\n" +
+            "{\"task1\":\"haha\"}\n" +
+            "{\"task2\":\"haha\"}\n" +
+            "3\n" +
+            "3\n" +
+            "{\"task2\":\"haha\"}\n" +
+            "{\"task1\":\"haha\"}\n" +
+            "3\n" +
+            "{\"task2\":\"haha\"}\n" +
+            "{\"task2\":\"haha\"}\n" +
+            "3";
+
+    public static String e2e_local_scope_failed_on_else_input = "ON 2 == 3 { \n" +
+            "\tSET 3 AS x\n" +
+            "\tLOG x\n" +
+            "\tLOG \"SUCCESS\" \n" +
+            "\t} ELSE { \n" +
+            "\t\tLOG x\n" +
+            "\t\tLOG \"FAILED\" \n" +
+            "\t\t}";
+
+    public static String e2e_local_scope_failed_on_else_output = "LOG Error: Variable `x` not defined in environment.\n";
+
+    public static String e2e_local_scope_success_on_else_input = "SET 4 AS x\n" +
+            "ON 2 == 2 { \n" +
+            "\tSET 3 AS x\n" +
+            "\tLOG x\n" +
+            "\tLOG \"SUCCESS\" \n" +
+            "\t} ELSE { \n" +
+            "\t\tLOG \"FAILED\" \n" +
+            "\t\t}";
+
+    public static String e2e_local_scope_success_on_else_output = "3\n" +
+            "SUCCESS\n";
+
+    public static String e2e_local_scope_success_on_else_nested_input = "ON 2 == 2 { \n" +
+            "\tSET 3 AS x\n" +
+            "\tLOG x\n" +
+            "\tON 1 == 1 {\n" +
+            "\t\t\tSET 4 AS y\n" +
+            "\t\t\tLOG y\n" +
+            "\t\t} ELSE {\n" +
+            "\t\t\t\tLOG \"FAILED nest\"\n" +
+            "\t\t\t}\n" +
+            "\tLOG \"SUCCESS\" \n" +
+            "\t} ELSE { \n" +
+            "\t\tLOG \"FAILED\" \n" +
+            "\t\t}";
+    public static String e2e_local_scope_success_on_else_nested_ouput = "3\n" +
+            "4\n" +
+            "SUCCESS\n";
+    public static String e2e_local_scope_fail_on_else_nested_input = "ON 2 == 2 { \n" +
+            "\tSET 3 AS x\n" +
+            "\tON 1 == 1 {\n" +
+            "\t\tSET 4 AS y\n" +
+            "\t} ELSE {\n" +
+            "\t\tLOG \"FAILED nest\"\n" +
+            "\t}\n" +
+            "\tLOG y\n" +
+            "\tLOG \"SUCCESS\" \n" +
+            "} ELSE { \n" +
+            "\tLOG \"FAILED\" \n" +
+            "}";
+    public static String e2e_local_scope_fail_on_else_nested_ouput = "LOG Error: Variable `y` not defined in environment.\n";
+
 }

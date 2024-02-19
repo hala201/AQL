@@ -225,10 +225,53 @@ class IntegrationTest {
 
     @Test
     void testLocalScope_Loop() {
-        this.inputTest_UI("SET GET https://65y4r.wiremockapi.cloud/users/tasks2 AS users\n" +
-                "FOR EACH user IN users {\n" +
-                "\t\tSET 3 AS x\n" +
-                "\t}\n" +
-                "LOG x", "LOG Error: Variable `x` not defined in environment." + testData.simpleSuccessNoLog, "it's printing the wrong thing lol");
+        this.inputTest_UI(testData.e2e_local_scope_failed_input, testData.e2e_local_scope_failed_output + testData.simpleSuccessNoLog, "testing out of scope");
+    }
+
+    @Test
+    void testLocalScopeCat_Loop() {
+        this.inputTest_UI(testData.e2e_cat_URL_local_scope_failed_input, testData.e2e_local_scope_failed_output + testData.simpleSuccessNoLog, "testing out of scope");
+    }
+
+    @Test
+    void testLocalScope_LoopDupeName() {
+        this.inputTest_UI(testData.e2e_cat_URL_dupe_var_name_input, testData.e2e_cat_URL_dupe_var_name_output + testData.simpleSuccessNoLog, "testing  out of scope");
+    }
+
+    @Test
+    void testLocalScope_Loop_Nested_EarlyFailure() {
+        this.inputTest_UI(testData.e2e_nested_scopes_loop_fail_early_input, testData.e2e_nested_scopes_loop_fail_early_output + testData.simpleSuccessNoLog, "testing  out of scope");
+    }
+
+    @Test
+    void testLocalScope_Loop_Nested_LateFailure() {
+        this.inputTest_UI(testData.e2e_nested_scopes_loop_input, testData.e2e_nested_scopes_loop_output + testData.simpleSuccessNoLog, "testing  out of scope");
+
+    }
+
+    @Test
+    void testLocalScope_Loop_Nested_Success() {
+        this.inputTest_UI(testData.e2e_nested_scope_success_input, testData.e2e_nested_scope_success_ouput + testData.simpleSuccessNoLog, "testing  out of scope");
+
+    }
+
+    @Test
+    void testLocalScope_OnElse_Success() {
+        this.inputTest_UI(testData.e2e_local_scope_success_on_else_input, testData.e2e_local_scope_success_on_else_output + testData.simpleSuccessNoLog, "testing  out of scope");
+    }
+
+    @Test
+    void testLocalScope_OnElse_Failure() {
+        this.inputTest_UI(testData.e2e_local_scope_failed_on_else_input, testData.e2e_local_scope_failed_on_else_output + testData.simpleSuccessNoLog, "testing  out of scope");
+    }
+
+    @Test
+    void testLocalScope_OnElse_Nested_Success() {
+        this.inputTest_UI(testData.e2e_local_scope_success_on_else_nested_input, testData.e2e_local_scope_success_on_else_nested_ouput + testData.simpleSuccessNoLog, "testing  out of scope");
+    }
+
+    @Test
+    void testLocalScope_OnElse_Nested_Failure() {
+        this.inputTest_UI(testData.e2e_local_scope_fail_on_else_nested_input, testData.e2e_local_scope_fail_on_else_nested_ouput + testData.simpleSuccessNoLog, "testing  out of scope");
     }
 }
