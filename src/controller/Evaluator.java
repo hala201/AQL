@@ -57,6 +57,10 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
         return this.memory;
     }
 
+    public Map<String, Integer> getCurrentEnvironment() {
+        return !this.localEnvironmentStack.isEmpty() ? this.localEnvironmentStack.peek() : this.environment;
+    }
+
     private boolean executionHalted = false;
     @Override
     public Void visit(Program p, PrintWriter out) {
@@ -95,7 +99,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
             try {
                 if (request.getParams() != null)
                     request.getParams().accept(this, out);
-                return handler.handleRequest(request, out, this.environment, this.memory);
+                return handler.handleRequest(request, out, this.getCurrentEnvironment(), this.memory);
             } catch (Exception e) {
                 out.write("Request Error: " + e.getMessage() + "\n");
                 throw new RuntimeException("Request Error: " + e.getMessage());
@@ -146,7 +150,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
             Object value = paramsContent.get(key);
 
             try {
-                Object actualValue = DataEvaluator.getFromMemory(value, this.environment, this.memory);
+                Object actualValue = DataEvaluator.getFromMemory(value, getCurrentEnvironment(), this.memory);
                 paramsContent.put(key, actualValue);
             } catch (Exception e) {
                 out.println("Error processing parameter " + key + ": " + e.getMessage());
@@ -158,14 +162,14 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
 
     @Override
     public Void visit(Loop loop, PrintWriter out) {
-        LocalScope.pushScope(this.localEnvironmentStack, this.environment);
+        LocalScope.pushScope(this.localEnvironmentStack, environment);
         Variable loopControlVariable = loop.getLoopControlVariable();
         Object iterable = null;
 
         if (loop.getIterable() instanceof GetReq) {
             iterable = ((GetReq) loop.getIterable()).accept(this, out);
         } else {
-            iterable = DataEvaluator.getFromMemory(loop.getIterable(), this.environment, this.memory);
+            iterable = DataEvaluator.getFromMemory(loop.getIterable(), this.getCurrentEnvironment(), this.memory);
         }
 
         if (!(iterable instanceof JSONObject || iterable instanceof JSONArray)) {
@@ -184,9 +188,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
                 loopControlVariable.setVariableContent(entryValue);
 
                 this.memory.put(currentMemPtr, entryValue);
-                this.environment.put(loopControlVariable.getVariableName(), currentMemPtr);
-
-                // System.out.println(i + "\n" + entry + "\n" +this.environment + "\n" + this.memory) ;
+                this.getCurrentEnvironment().put(loopControlVariable.getVariableName(), currentMemPtr);
 
                 //execute loop body
                 Program loopBody = loop.getLoopBody();
@@ -195,7 +197,7 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
             }
         }
         // TBD: might be problem if have dupe variable names
-        this.environment.remove(this.memory.get(currentMemPtr));
+        this.getCurrentEnvironment().remove(this.memory.get(currentMemPtr));
         this.memory.remove(currentMemPtr);
 
         LocalScope.popScope(this.localEnvironmentStack);
@@ -216,11 +218,6 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
                 out.write("empty ON body");
                 throw new IllegalArgumentException("empty on body");
             }
-            // Allow empty else
-            // if (oe.getElseBody() == null){
-            //     out.write("empty ELSE body");
-            //     throw new IllegalArgumentException("empty else body");
-            // }
             if (oe.getCondition() == null) {
                 out.write("missing condition");
                 throw new IllegalArgumentException("null condition");
@@ -245,8 +242,8 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     @Override
     public Boolean visit(Condition condition, PrintWriter out) {
 
-        Object leftOperand = DataEvaluator.getFromMemory(condition.getLeft(), this.environment, this.memory);
-        Object rightOperand = DataEvaluator.getFromMemory(condition.getRight(), this.environment, this.memory);
+        Object leftOperand = DataEvaluator.getFromMemory(condition.getLeft(), this.getCurrentEnvironment(), this.memory);
+        Object rightOperand = DataEvaluator.getFromMemory(condition.getRight(), this.getCurrentEnvironment(), this.memory);
         String operator = condition.getRule();
 
         return this.compareOperands(leftOperand, rightOperand, operator, out);
@@ -275,8 +272,8 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     @Override
     public Void visit(Set set, PrintWriter out) {
         try {
-            this.environment.put(set.getKey(), this.memptr);
 
+            this.getCurrentEnvironment().put(set.getKey(), this.memptr);
             if (set.getVal() instanceof Request) {
                 this.memory.put(this.memptr++, ((Request) set.getVal()).getRequest().accept(this, out));
             } else if (set.getVal() instanceof Params) {
@@ -294,10 +291,10 @@ public class Evaluator implements AQLVisitorType<PrintWriter, Object>{
     @Override
     public Void visit(Log log, PrintWriter out) {
         try {
-            Object msg = DataEvaluator.getFromMemory(log.getMsgObject(), this.environment, this.memory);
+            Object msg = DataEvaluator.getFromMemory(log.getMsgObject(), getCurrentEnvironment(), this.memory);
             if (msg == null) {
                 out.write("trying to print " + log.getMsgObject());
-                throw new IllegalArgumentException("LOG: trying to print null");
+                throw new IllegalArgumentException("LOG: trying to print Null");
             }
             out.println(msg);
         } catch (Exception e) {

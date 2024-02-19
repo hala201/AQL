@@ -222,4 +222,13 @@ class IntegrationTest {
         this.inputTest_UI(testData.e2e_cat_URL2_failed_input,
                 testData.e2e_cat_URL2_failed_output + testData.simpleSuccessNoLog, "cat URL2 failed input success test");
     }
+
+    @Test
+    void testLocalScope_Loop() {
+        this.inputTest_UI("SET GET https://65y4r.wiremockapi.cloud/users/tasks2 AS users\n" +
+                "FOR EACH user IN users {\n" +
+                "\t\tSET 3 AS x\n" +
+                "\t}\n" +
+                "LOG x", "LOG Error: Variable `x` not defined in environment." + testData.simpleSuccessNoLog, "it's printing the wrong thing lol");
+    }
 }
